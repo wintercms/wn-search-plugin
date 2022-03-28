@@ -106,6 +106,26 @@ trait Searchable
     }
 
     /**
+     * Get the indexable data array for the model.
+     *
+     * @return array
+     */
+    public function toSearchableArray()
+    {
+        if (property_exists($this, 'searchable')) {
+            $searchableData = [];
+
+            foreach ($this->searchable as $attribute) {
+                $searchableData[$attribute] = $this->{$attribute};
+            }
+
+            return $searchableData;
+        }
+
+        return $this->toArray();
+    }
+
+    /**
      * Get the queue connection that should be used when syncing.
      *
      * @return string
