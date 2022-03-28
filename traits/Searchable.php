@@ -184,4 +184,48 @@ trait Searchable
     {
         return in_array(SoftDelete::class, class_uses_recursive(get_called_class()));
     }
+
+    /**
+     * Get the value used to index the model.
+     *
+     * @return mixed
+     */
+    public function getSearchKey()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Get the key name used to index the model.
+     *
+     * @return mixed
+     */
+    public function getSearchKeyName()
+    {
+        return $this->getQualifiedKeyName();
+    }
+
+    /**
+     * Get the value used to index the model.
+     *
+     * This is overridden by the "getSearchKey" method that normalises the method name for this plugin.
+     *
+     * @return mixed
+     */
+    final public function getScoutKey()
+    {
+        return $this->getSearchKey();
+    }
+
+    /**
+     * Get the key name used to index the model.
+     *
+     * This is overridden by the "getSearchKeyName" method that normalises the method name for this plugin.
+     *
+     * @return mixed
+     */
+    final public function getScoutKeyName()
+    {
+        return $this->getSearchKeyName();
+    }
 }

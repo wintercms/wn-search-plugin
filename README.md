@@ -109,3 +109,40 @@ class Post extends Model
     }
 }
 ```
+
+### Configuring the model ID
+
+Normally, the primary key of the model will act as the model's unique ID that is stored in the search index. If you wish to use another column to act as the identifier for a model, you may override the `getSearchKey` and `getSearchKeyName` methods to customise this behaviour.
+
+```php
+<?php
+
+namespace Winter\Plugin\Models;
+
+use Model;
+use Winter\Search\Traits\Searchable;
+
+class User extends Model
+{
+    use Searchable;
+
+    /**
+     * Get the value used to index the model.
+     *
+     * @return mixed
+     */
+    public function getSearchKey()
+    {
+        return $this->email;
+    }
+
+    /**
+     * Get the key name used to index the model.
+     *
+     * @return mixed
+     */
+    public function getSearchKeyName()
+    {
+        return 'email';
+    }
+```
