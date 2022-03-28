@@ -6,6 +6,11 @@ use Config;
 use Laravel\Scout\ModelObserver as BaseModelObserver;
 use Winter\Storm\Database\Traits\SoftDelete;
 
+/**
+ * Model Observer wrapper.
+ *
+ * Provides compatibility with our own configuration and Soft Delete trait.
+ */
 class ModelObserver extends BaseModelObserver
 {
     /**

@@ -11,6 +11,11 @@ use Winter\Search\Classes\ModelObserver;
 use Winter\Search\Classes\SearchableScope;
 use Winter\Storm\Database\Traits\SoftDelete;
 
+/**
+ * Searchable trait wrapper.
+ *
+ * Includes the base Searchable trait but uses our own classes where necessary.
+ */
 trait Searchable
 {
     use BaseSearchable;
@@ -107,7 +112,7 @@ trait Searchable
      */
     public function syncWithSearchUsing()
     {
-        return Config::get('search.queue.connection') ?: config('queue.default');
+        return Config::get('search.queue.connection') ?: Config::get('queue.default');
     }
 
     /**

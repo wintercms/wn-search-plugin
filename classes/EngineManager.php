@@ -13,6 +13,11 @@ use Winter\Search\Engines\DatabaseEngine;
 use Winter\Search\Engines\MeiliSearchEngine;
 use Winter\Search\Engines\NullEngine;
 
+/**
+ * Engine Manager wrapper.
+ *
+ * This provides compatibility with our configuration, and uses our own Engine classes.
+ */
 class EngineManager extends BaseEngineManager
 {
     /**

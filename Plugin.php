@@ -8,8 +8,18 @@ use System\Classes\PluginBase;
 use MeiliSearch\Client as MeiliSearch;
 use Winter\Search\Classes\EngineManager;
 
+/**
+ * Search plugin.
+ *
+ * Adds full-text search capabilities to Winter.
+ *
+ * @author Ben Thomson <git@alfreido.com>
+ */
 class Plugin extends PluginBase
 {
+    /**
+     * @inheritDoc
+     */
     public function pluginDetails()
     {
         return [
@@ -21,6 +31,9 @@ class Plugin extends PluginBase
         ];
     }
 
+    /**
+     * @inheritDoc
+     */
     public function register()
     {
         if (class_exists(MeiliSearch::class)) {
@@ -31,12 +44,16 @@ class Plugin extends PluginBase
             });
         }
 
+        // Use our own Engine Manager and alias the Laravel Scout manager to our own.
         $this->app->singleton(EngineManager::class, function ($app) {
             return new EngineManager($app);
         });
         $this->app->alias(EngineManager::class, ScoutEngineManager::class);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function boot()
     {
         // Load configuration

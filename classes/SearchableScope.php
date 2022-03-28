@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Scope;
 use Laravel\Scout\Events\ModelsFlushed;
 use Laravel\Scout\Events\ModelsImported;
 
+/**
+ * Searchable Scope wrapper.
+ *
+ * Provides compatibility with our own configuration.
+ */
 class SearchableScope implements Scope
 {
     /**
