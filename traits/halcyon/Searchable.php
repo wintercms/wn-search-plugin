@@ -42,9 +42,19 @@ trait Searchable
      *
      * @return mixed
      */
+    public function getKeyName()
+    {
+        return 'fileName';
+    }
+
+    /**
+     * Get the value used to index the model.
+     *
+     * @return mixed
+     */
     public function getSearchKey()
     {
-        return $this->getBaseFileName();
+        return Str::slug(str_replace('.', '-', $this->getFileName()));
     }
 
     /**
@@ -54,6 +64,6 @@ trait Searchable
      */
     public function getSearchKeyName()
     {
-        return 'basename';
+        return 'fileName';
     }
 }
