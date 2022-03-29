@@ -2,6 +2,7 @@
 
 namespace Winter\Search\Traits;
 
+use Arr;
 use Config;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Scout;
@@ -114,9 +115,12 @@ trait Searchable
     {
         if (property_exists($this, 'searchable')) {
             $searchableData = [];
+            $modelAttributes = Arr::dot($this->getAttributes());
 
             foreach ($this->searchable as $attribute) {
-                $searchableData[$attribute] = $this->{$attribute};
+                // Convert to dot notation
+                $attribute = str_replace(['[', ']'], ['.', ''], $attribute);
+                Arr::set($searchableData, $attribute, $modelAttributes[$attribute] ?? null);
             }
 
             return $searchableData;
