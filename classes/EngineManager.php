@@ -7,6 +7,7 @@ use Algolia\AlgoliaSearch\Config\SearchConfig;
 use Algolia\AlgoliaSearch\SearchClient as Algolia;
 use Algolia\AlgoliaSearch\Support\UserAgent;
 use Laravel\Scout\EngineManager as BaseEngineManager;
+use MeiliSearch\Client as MeiliSearch;
 use Winter\Search\Engines\AlgoliaEngine;
 use Winter\Search\Engines\CollectionEngine;
 use Winter\Search\Engines\DatabaseEngine;
