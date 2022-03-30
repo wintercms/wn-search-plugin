@@ -14,24 +14,16 @@ use Winter\Storm\Halcyon\Model;
 class HalcyonModelObserver extends BaseModelObserver
 {
     /**
-     * The Halcyon model instance.
-     *
-     * @var \Winter\Storm\Halcyon\Model
-     */
-    protected $model;
-
-    /**
      * Create a new observer instance.
      *
      * @return void
      */
     public function __construct(Model $model)
     {
-        $this->model = $model;
         $this->afterCommit = Config::get('search.after_commit', false);
         $this->usingSoftDeletes = Config::get('search.soft_delete', false);
 
-        $this->model::extend(function ($model) {
+        $model::extend(function ($model) {
             $model->bindEvent('model.afterSave', function () use ($model) {
                 if (static::syncingDisabledFor($model)) {
                     return;
