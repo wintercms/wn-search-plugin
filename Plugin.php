@@ -18,13 +18,18 @@ use Winter\Search\Classes\EngineManager;
 class Plugin extends PluginBase
 {
     /**
+     * Language string prefix
+     */
+    const LANG = 'winter.search::lang.';
+
+    /**
      * @inheritDoc
      */
     public function pluginDetails()
     {
         return [
-            'name'        => 'winter.search::lang.plugin.name',
-            'description' => 'winter.search::lang.plugin.description',
+            'name'        => self::LANG . 'plugin.name',
+            'description' => self::LANG . 'plugin.description',
             'author'      => 'Winter CMS',
             'icon'        => 'icon-search',
             'homepage'    => 'https://github.com/wintercms/wn-search-plugin',
@@ -95,5 +100,15 @@ class Plugin extends PluginBase
                 'search.php'
             ])
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registerComponents()
+    {
+        return [
+            'Winter\Search\Components\Search' => 'search',
+        ];
     }
 }
