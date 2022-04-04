@@ -40,6 +40,54 @@ class Search extends ComponentBase
                 'required' => true,
                 'placeholder' => Lang::get(Plugin::LANG . 'components.search.handler.placeholder'),
             ],
+            'limit' => [
+                'title' => Plugin::LANG . 'components.search.limit.title',
+                'description' => Plugin::LANG . 'components.search.limit.description',
+                'type' => 'string',
+                'default' => 100,
+                'validationPattern' => '^[0-9]+$',
+                'validationMessage' => Plugin::LANG . 'components.search.limit.validationMessage',
+                'group' => Plugin::LANG . 'components.search.groups.pagination',
+            ],
+            'perPage' => [
+                'title' => Plugin::LANG . 'components.search.perPage.title',
+                'description' => Plugin::LANG . 'components.search.perPage.description',
+                'type' => 'string',
+                'default' => 20,
+                'validationPattern' => '^[0-9]+$',
+                'validationMessage' => Plugin::LANG . 'components.search.limit.validationMessage',
+                'group' => Plugin::LANG . 'components.search.groups.pagination',
+            ],
+            'combineResults' => [
+                'title' => Plugin::LANG . 'components.search.combineResults.title',
+                'description' => Plugin::LANG . 'components.search.combineResults.description',
+                'type' => 'checkbox',
+                'default' => false,
+                'group' => Plugin::LANG . 'components.search.groups.pagination',
+            ],
+            'displayImages' => [
+                'title' => Plugin::LANG . 'components.search.displayImages.title',
+                'type' => 'checkbox',
+                'default' => true,
+                'group' => Plugin::LANG . 'components.search.groups.display',
+                'showExternalParam' => false,
+            ],
+            'displayHandlerName' => [
+                'title' => Plugin::LANG . 'components.search.displayHandlerName.title',
+                'description' => Plugin::LANG . 'components.search.displayHandlerName.description',
+                'type' => 'checkbox',
+                'default' => true,
+                'group' => Plugin::LANG . 'components.search.groups.display',
+                'showExternalParam' => false,
+            ],
+            'displayPluginName' => [
+                'title' => Plugin::LANG . 'components.search.displayPluginName.title',
+                'description' => Plugin::LANG . 'components.search.displayPluginName.description',
+                'type' => 'checkbox',
+                'default' => false,
+                'group' => Plugin::LANG . 'components.search.groups.display',
+                'showExternalParam' => false,
+            ]
         ];
     }
 
@@ -54,7 +102,7 @@ class Search extends ComponentBase
             return [];
         }
 
-        foreach ($registeredHandlers as $pluginCode => $handlers) {
+        foreach (array_values($registeredHandlers) as $handlers) {
             foreach ($handlers as $name => $handler) {
                 if (array_key_exists($name, $handler)) {
                     continue;
@@ -65,5 +113,12 @@ class Search extends ComponentBase
         }
 
         return $handlers;
+    }
+
+    public function onSearch()
+    {
+        return [
+            'results' => [],
+        ];
     }
 }
