@@ -1,27 +1,52 @@
 <?php
 
-namespace Winter\Search\Traits\Halcyon;
+namespace Winter\Search\Behaviors\Halcyon;
 
-use Str;
-use Config;
 use Cms\Classes\Theme;
+use Winter\Search\Behaviors\Searchable as BaseSearchable;
 use Winter\Search\Classes\HalcyonModelObserver;
-use Winter\Search\Traits\Searchable as BaseSearchable;
+use Winter\Storm\Support\Arr;
+use Winter\Storm\Support\Str;
+use Winter\Storm\Support\Facades\Config;
 
-trait Searchable
+class Searchable extends BaseSearchable
 {
-    use BaseSearchable;
+    /**
+     * @var string[] Classes that have been booted with this behaviour.
+     */
+    public static $bootedClasses = [];
 
     /**
+     * Constructor for the behaviour.
+     *
+     * Attaches listeners to the model.
+     *
+     * @param \Winter\Storm\Halcyon\Model $model
+     */
+    public function __construct($model)
+    {
+        $this->model = $model;
+        static::$extendableStaticCalledClass = get_class($this->model);
+
+        if (!in_array(static::getCalledExtensionClass(), static::$bootedClasses)) {
+            $this->bootSearchable();
+            static::$booted = true;
+        }
+        if (!static::$booted) {
+            $this->registerSearchableMacros();
+        }
+    }
+
+        /**
      * Boot the trait.
      *
      * @return void
      */
-    public static function bootSearchable()
+    protected function bootSearchable()
     {
-        new HalcyonModelObserver(new static);
-
-        (new static)->registerSearchableMacros();
+        $class = static::getCalledExtensionClass();
+        static::$bootedClasses[] = $class;
+        new HalcyonModelObserver(new $class);
     }
 
     /**
@@ -32,14 +57,14 @@ trait Searchable
      */
     public static function makeAllSearchable($chunk = null)
     {
-        $self = new static;
-
-        $softDelete = static::usesSoftDelete() && Config::get('search.soft_delete', false);
+        $model = static::getCalledExtensionClass();
+        $self = new $model;
 
         $self->newQuery()
             ->get()
             ->searchable($chunk);
     }
+
 
     /**
      * Get the index name for the model.
@@ -49,7 +74,7 @@ trait Searchable
     public function searchableAs()
     {
         $themeCode = Theme::getActiveThemeCode();
-        $dirName = $this->getObjectTypeDirName();
+        $dirName = $this->model->getObjectTypeDirName();
 
         return Config::get('search.prefix') . Str::slug($themeCode . '-' . str_replace(['/', '\\'], '-', $dirName));
     }
@@ -61,14 +86,14 @@ trait Searchable
      */
     public function toSearchableArray()
     {
-        if (property_exists($this, 'searchable')) {
+        if ($this->model->propertyExists('searchable')) {
             $searchableData = [];
-            $modelAttributes = Arr::dot($this->getAttributes());
+            $modelAttributes = Arr::dot($this->model->getAttributes());
 
-            foreach ($this->searchable as $attribute) {
+            foreach ($this->model->searchable as $attribute) {
                 // Convert filenames so they don't fail the ID checks of some engines
                 if ($attribute === 'fileName') {
-                    $searchableData[$attribute] = Str::slug(str_replace('.', '-', $this->getFileName()));
+                    $searchableData[$attribute] = Str::slug(str_replace('.', '-', $this->model->getFileName()));
                     continue;
                 }
 
@@ -80,9 +105,9 @@ trait Searchable
             return $searchableData;
         }
 
-        $attributes = $this->toArray();
+        $attributes = $this->model->toArray();
         // Convert filenames so they don't fail the ID checks of some engines
-        $attributes['fileName'] = Str::slug(str_replace('.', '-', $this->getFileName()));
+        $attributes['fileName'] = Str::slug(str_replace('.', '-', $this->model->getFileName()));
 
         return $attributes;
     }
@@ -104,7 +129,7 @@ trait Searchable
      */
     public function getSearchKey()
     {
-        return Str::slug(str_replace('.', '-', $this->getFileName()));
+        return Str::slug(str_replace('.', '-', $this->model->getFileName()));
     }
 
     /**
