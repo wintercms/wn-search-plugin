@@ -185,6 +185,44 @@ class Searchable extends ExtensionBase
     }
 
     /**
+     * Get the requested models from an array of object IDs.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $ids
+     * @return mixed
+     */
+    public function getScoutModelsByIds(Builder $builder, array $ids)
+    {
+        return $this->model->queryScoutModelsByIds($builder, $ids)->get();
+    }
+
+    /**
+     * Get a query builder for retrieving the requested models from an array of object IDs.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $ids
+     * @return mixed
+     */
+    public function queryScoutModelsByIds(Builder $builder, array $ids)
+    {
+        $query = static::usesSoftDelete()
+            ? $this->model->withTrashed() : $this->model->newQuery();
+
+        if ($builder->queryCallback) {
+            call_user_func($builder->queryCallback, $query);
+        }
+
+        $whereIn = in_array($this->model->getKeyType(), ['int', 'integer']) ?
+            'whereIntegerInRaw' :
+            'whereIn';
+
+        return $query->{$whereIn}(
+            $this->getScoutKeyName(),
+            $ids
+        );
+    }
+
+    /**
      * Get the index name for the model.
      *
      * @return string

@@ -3,6 +3,7 @@
 namespace Winter\Search\Behaviors\Halcyon;
 
 use Cms\Classes\Theme;
+use Laravel\Scout\Builder;
 use Winter\Search\Behaviors\Searchable as BaseSearchable;
 use Winter\Search\Classes\HalcyonModelObserver;
 use Winter\Storm\Support\Arr;
@@ -11,6 +12,11 @@ use Winter\Storm\Support\Facades\Config;
 
 class Searchable extends BaseSearchable
 {
+    /**
+     * @var \Winter\Storm\Halcyon\Model $model The model instance being extended
+     */
+    protected $model;
+
     /**
      * @var string[] Classes that have been booted with this behaviour.
      */
@@ -65,6 +71,29 @@ class Searchable extends BaseSearchable
             ->searchable($chunk);
     }
 
+    /**
+     * Get a query builder for retrieving the requested models from an array of object IDs.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $ids
+     * @return mixed
+     */
+    public function queryScoutModelsByIds(Builder $builder, array $ids)
+    {
+        $query = $this->model->newQuery();
+        $results = $query->get()->map(function ($item) {
+            $item->fileName = Str::slug(str_replace('.', '-', $item->fileName));
+            return $item;
+        })->toArray();
+
+        $test = $query->get()->map(function ($item) {
+            $item->fileName = Str::slug(str_replace('.', '-', $item->fileName));
+            return $item;
+        })->whereIn(
+            $this->getScoutKeyName(),
+            $ids
+        );
+    }
 
     /**
      * Get the index name for the model.

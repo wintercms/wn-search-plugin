@@ -5,6 +5,7 @@ namespace Winter\Search\Components;
 use Lang;
 use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
+use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
 
 /**
@@ -115,10 +116,50 @@ class Search extends ComponentBase
         return $handlers;
     }
 
+    public function getSelectedHandlers()
+    {
+        /** @var PluginManager */
+        $pluginManager = PluginManager::instance();
+        $registeredHandlers = $pluginManager->getRegistrationMethodValues('registerSearchHandlers');
+        $handlers = [];
+
+        $selected = $this->property('handler');
+
+        foreach (array_values($registeredHandlers) as $handlers) {
+            foreach ($handlers as $name => $handler) {
+                if (array_key_exists($name, $selected)) {
+                    continue;
+                }
+
+                if (in_array($name, $selected)) {
+                    $handlers[$name] = $handler;
+                }
+            }
+        }
+
+        return $handlers;
+    }
+
     public function onSearch()
     {
-        return [
-            'results' => [],
-        ];
+        $query = Request::post('query');
+        $handlers = $this->getSelectedHandlers();
+
+        if (!count($handlers)) {
+            return [
+                'results' => [],
+                'groups' => [],
+                'count' => 0,
+            ];
+        }
+
+        $handlerResults = [];
+
+        foreach ($handlers as $name => $handler) {
+            $class = $handler['model'];
+            $results = $class::search($query)->get();
+            var_dump($results);
+            die();
+        }
     }
 }
