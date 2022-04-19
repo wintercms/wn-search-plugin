@@ -4,6 +4,7 @@ namespace Winter\Search\Behaviors\Halcyon;
 
 use Cms\Classes\Theme;
 use Laravel\Scout\Builder;
+use Illuminate\Support\Collection as BaseCollection;
 use Winter\Search\Behaviors\Searchable as BaseSearchable;
 use Winter\Search\Classes\HalcyonModelObserver;
 use Winter\Storm\Support\Arr;
@@ -72,6 +73,18 @@ class Searchable extends BaseSearchable
     }
 
     /**
+     * Get the requested models from an array of object IDs.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  array  $ids
+     * @return mixed
+     */
+    public function getScoutModelsByIds(Builder $builder, array $ids)
+    {
+        return $this->queryScoutModelsByIds($builder, $ids);
+    }
+
+    /**
      * Get a query builder for retrieving the requested models from an array of object IDs.
      *
      * @param  \Laravel\Scout\Builder  $builder
@@ -81,18 +94,26 @@ class Searchable extends BaseSearchable
     public function queryScoutModelsByIds(Builder $builder, array $ids)
     {
         $query = $this->model->newQuery();
-        $results = $query->get()->map(function ($item) {
-            $item->fileName = Str::slug(str_replace('.', '-', $item->fileName));
-            return $item;
-        })->toArray();
 
-        $test = $query->get()->map(function ($item) {
-            $item->fileName = Str::slug(str_replace('.', '-', $item->fileName));
-            return $item;
-        })->whereIn(
-            $this->getScoutKeyName(),
-            $ids
-        );
+        $records = array_flip(array_map(function ($fileName) {
+            return Str::slug(str_replace('.', '-', $fileName));
+        }, $query->lists('fileName', 'fileName')));
+
+        // Filter records
+        $records = array_filter($records, function ($key) use ($ids) {
+            return in_array($key, $ids);
+        }, ARRAY_FILTER_USE_KEY);
+
+        // Create array of models
+        $models = [];
+        foreach (array_values($records) as $fileName) {
+            $model = $this->model->newQuery()->find($fileName);
+            if ($model) {
+                $models[] = $model;
+            }
+        }
+
+        return new BaseCollection($models);
     }
 
     /**
