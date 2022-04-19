@@ -5,8 +5,11 @@ namespace Winter\Search\Components;
 use Lang;
 use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
+use Winter\Storm\Support\Arr;
+use Winter\Storm\Support\Facades\Validator;
 
 /**
  * Search component.
@@ -92,28 +95,57 @@ class Search extends ComponentBase
         ];
     }
 
+    /**
+     * Gets all registered search handlers.
+     *
+     * Plugins may specify a handler in their `Plugin.php` by creating a
+     *
+     * @return void
+     */
     public function getHandlerOptions()
     {
         /** @var PluginManager */
         $pluginManager = PluginManager::instance();
         $registeredHandlers = $pluginManager->getRegistrationMethodValues('registerSearchHandlers');
-        $handlers = [];
+        $options = [];
 
         if (!count($registeredHandlers)) {
             return [];
         }
 
-        foreach (array_values($registeredHandlers) as $handlers) {
+        foreach ($registeredHandlers as $pluginCode => $handlers) {
             foreach ($handlers as $name => $handler) {
                 if (array_key_exists($name, $handler)) {
                     continue;
                 }
 
-                $handlers[$name] = Lang::get($handler['name']);
+                $validator = Validator::make($handler, [
+                    'model' => 'required|string',
+                    'record' => 'required'
+                ], [
+                    'model.required' => Lang::get(Plugin::LANG . 'validation.modelRequired', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                    'model.string' => Lang::get(Plugin::LANG . 'validation.modelString', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                    'record.required' => Lang::get(Plugin::LANG . 'validation.recordRequired', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                ]);
+                if ($validator->fails()) {
+                    Log::error($validator->getMessageBag()->first());
+                    continue;
+                }
+
+                $options[$name] = Lang::get($handler['name']);
             }
         }
 
-        return $handlers;
+        return $options;
     }
 
     public function getSelectedHandlers()
@@ -121,23 +153,45 @@ class Search extends ComponentBase
         /** @var PluginManager */
         $pluginManager = PluginManager::instance();
         $registeredHandlers = $pluginManager->getRegistrationMethodValues('registerSearchHandlers');
-        $handlers = [];
+        $selectedHandlers = [];
 
         $selected = $this->property('handler');
 
-        foreach (array_values($registeredHandlers) as $handlers) {
+        foreach ($registeredHandlers as $pluginCode => $handlers) {
             foreach ($handlers as $name => $handler) {
                 if (array_key_exists($name, $selected)) {
                     continue;
                 }
 
+                $validator = Validator::make($handler, [
+                    'model' => 'required|string',
+                    'record' => 'required'
+                ], [
+                    'model.required' => Lang::get(Plugin::LANG . 'validation.modelRequired', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                    'model.string' => Lang::get(Plugin::LANG . 'validation.modelString', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                    'record.required' => Lang::get(Plugin::LANG . 'validation.recordRequired', [
+                        'plugin' => $pluginCode,
+                        'name' => $name
+                    ]),
+                ]);
+                if ($validator->fails()) {
+                    Log::error($validator->getMessageBag()->first());
+                    continue;
+                }
+
                 if (in_array($name, $selected)) {
-                    $handlers[$name] = $handler;
+                    $selectedHandlers[$name] = $handler;
                 }
             }
         }
 
-        return $handlers;
+        return $selectedHandlers;
     }
 
     public function onSearch()
@@ -148,18 +202,90 @@ class Search extends ComponentBase
         if (!count($handlers)) {
             return [
                 'results' => [],
-                'groups' => [],
                 'count' => 0,
             ];
         }
 
         $handlerResults = [];
+        $totalCount = 0;
 
-        foreach ($handlers as $name => $handler) {
+        foreach ($handlers as $id => $handler) {
             $class = $handler['model'];
-            $results = $class::search($query)->get();
-            var_dump($results);
-            die();
+            $results = $class::search($query)->paginate($this->property('perPage', 20));
+
+            if ($results->count() === 0) {
+                $handlerResults[$id] = [
+                    'name' => Lang::get($handler['name']),
+                    'results' => [],
+                    'count' => 0,
+                ];
+                continue;
+            }
+
+            foreach ($results as $result) {
+                $processed = $this->processRecord($result, $query, $handler['record']);
+
+                if ($processed === false) {
+                    continue;
+                }
+
+                if (!isset($handlerResults[$id])) {
+                    $handlerResults[$id] = [
+                        'name' => Lang::get($handler['name']),
+                        'results' => [],
+                        'count' => $results->count(),
+                    ];
+                    $totalCount += $results->count();
+                }
+
+                $handlerResults[$id]['results'][] = $processed;
+            }
+        }
+
+        return [
+            'results' => $handlerResults,
+            'count' => $totalCount,
+        ];
+    }
+
+    protected function processRecord($record, string $query, array|callable $handler)
+    {
+        $requiredAttributes = ['title', 'description', 'url', 'image'];
+
+        if (is_callable($handler)) {
+            $processed = $handler($record, $query);
+
+            foreach ($requiredAttributes as $attr) {
+                if (!isset($handler[$attr])) {
+                    return false;
+                }
+            }
+
+            return $processed;
+        } else {
+            $processed = [];
+
+            foreach ($requiredAttributes as $attr) {
+                if (!isset($handler[$attr])) {
+                    return false;
+                }
+
+                if (is_callable($handler[$attr])) {
+                    $processed[$attr] = $handler[$attr]($record, $query);
+                } else {
+                    $processed[$attr] = Arr::get($record, $handler[$attr], null);
+                }
+            }
+
+            foreach ($handler as $attr => $value) {
+                if (in_array($attr, $requiredAttributes)) {
+                    continue;
+                }
+
+                $processed[$attr] = $value;
+            }
+
+            return $processed;
         }
     }
 }
