@@ -70,11 +70,12 @@ By default, the entire model is converted to an array form and persisted in the 
 namespace Winter\Plugin\Models;
 
 use Model;
-use Winter\Search\Traits\Searchable;
 
 class Post extends Model
 {
-    use Searchable;
+    public $implement = [
+        \Winter\Search\Behaviors\Searchable::class,
+    ];
 
     public $searchable = [
         'title',
@@ -91,11 +92,12 @@ If you want even more control over the data, you may override the `toSearchableA
 namespace Winter\Plugin\Models;
 
 use Model;
-use Winter\Search\Traits\Searchable;
 
 class Post extends Model
 {
-    use Searchable;
+    public $implement = [
+        \Winter\Search\Behaviors\Searchable::class,
+    ];
 
     /**
      * Get the indexable data array for the model.
@@ -161,11 +163,12 @@ Normally, the primary key of the model will act as the model's unique ID that is
 namespace Winter\Plugin\Models;
 
 use Model;
-use Winter\Search\Traits\Searchable;
 
 class User extends Model
 {
-    use Searchable;
+    public $implement = [
+        \Winter\Search\Behaviors\Searchable::class,
+    ];
 
     /**
      * Get the value used to index the model.
