@@ -1,21 +1,9 @@
 {{ form_ajax(__SELF__ ~ '::onSearch') }}
 
-    <div class="search-input">
-        <input
-            type="text"
-            name="query"
-            class="search-control"
-            placeholder="{{ 'Enter your search query'|trans }}"
-            data-track-input="1000"
-        />
-    </div>
-
-    <div class="search-actions">
-        <input
-            type="submit"
-            class="search-submit"
-            value="{{ 'Search'|trans }}"
-        >
-    </div>
+    {% partial SELF ~ '::form' %}
 
 {{ form_close() }}
+
+<div id="search-results">
+
+</div>
