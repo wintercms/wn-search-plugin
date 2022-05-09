@@ -8,6 +8,11 @@ Adds full-text searching capabilities to Winter, built on the foundations of [La
 The plugin acts primarily as a wrapper for Laravel Scout, and provides its entire suite of functionality within Winter's
 architecture, but also includes additional capabilities to make its use in Winter even easier.
 
+## Requirements
+
+- PHP 8.0 or above
+- Winter CMS 1.2.0 or above (due to Laravel 9 requirement)
+
 ## Getting started
 
 To install the plugin, you may install it through the [Winter CMS Marketplace](https://github.com/wintercms/wn-search-plugin), or you may install it using Composer:
