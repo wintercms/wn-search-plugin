@@ -3,13 +3,16 @@
 namespace Winter\Search\Tests\Fixtures;
 
 use Model;
-use Winter\Search\Traits\Searchable;
+use Winter\Search\Behaviors\Searchable;
 use Winter\Storm\Database\Traits\SoftDelete;
 
 class SearchableModelWithSoftDelete extends Model
 {
     use SoftDelete;
-    use Searchable;
+
+    public $implement = [
+        Searchable::class
+    ];
 
     /**
      * The attributes that are mass assignable.
