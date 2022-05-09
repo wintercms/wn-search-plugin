@@ -256,7 +256,7 @@ class Search extends ComponentBase
             $processed = $handler($record, $query);
 
             foreach ($requiredAttributes as $attr) {
-                if (!isset($handler[$attr])) {
+                if (!array_key_exists($attr, $processed)) {
                     return false;
                 }
             }
