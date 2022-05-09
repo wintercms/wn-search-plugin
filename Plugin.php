@@ -6,6 +6,7 @@ use Config;
 use Laravel\Scout\EngineManager as ScoutEngineManager;
 use System\Classes\PluginBase;
 use MeiliSearch\Client as MeiliSearch;
+use Winter\Search\Classes\CorePluginManager;
 use Winter\Search\Classes\EngineManager;
 
 /**
@@ -68,6 +69,9 @@ class Plugin extends PluginBase
             $this->registerCommands();
             $this->registerPublishedConfig();
         }
+
+        $corePlugins = CorePluginManager::instance();
+        $corePlugins->attachCorePlugins();
     }
 
     /**
@@ -110,5 +114,15 @@ class Plugin extends PluginBase
         return [
             'Winter\Search\Components\Search' => 'search',
         ];
+    }
+
+    /**
+     * Register search handlers.
+     *
+     * @return array
+     */
+    public function registerSearchHandlers()
+    {
+        return CorePluginManager::instance()->getHandlers();
     }
 }

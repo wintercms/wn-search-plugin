@@ -5,6 +5,10 @@ return [
         'name' => 'Search',
         'description' => 'Implements full-text searching capabilities into Winter.'
     ],
+    'otherPlugins' => [
+        'cmsPages' => 'CMS Pages',
+        'staticPages' => 'Static Pages',
+    ],
     'components' => [
         'search' => [
             'name' => 'Search',

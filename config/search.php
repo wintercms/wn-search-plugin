@@ -134,4 +134,22 @@ return [
         'key' => env('MEILISEARCH_KEY', null),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Core plugin support
+    |--------------------------------------------------------------------------
+    |
+    | The Search plugins supports multiple core plugins directly for applying
+    | searching functionality. While creating your own search capabilities for
+    | these plugins will work fine, you may wish to disable the in-built search
+    | capabilities for one or more plugins by changing the following plugins
+    | to `false`.
+    |
+    */
+
+    'plugins' => [
+        'cmsPages' => true,
+        'staticPages' => true,
+    ],
+
 ];
