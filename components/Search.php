@@ -5,6 +5,7 @@ namespace Winter\Search\Components;
 use Lang;
 use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
@@ -197,10 +198,12 @@ class Search extends ComponentBase
     public function onSearch()
     {
         $query = Request::post('query');
+        $page = Request::post('page', 1);
         $handlers = $this->getSelectedHandlers();
 
-        if (!count($handlers)) {
+        if (!count($handlers) || empty($query)) {
             return [
+                '#search-results' => $this->renderPartial('@no-results'),
                 'results' => [],
                 'count' => 0,
             ];
@@ -209,13 +212,17 @@ class Search extends ComponentBase
         $handlerResults = [];
         $totalCount = 0;
 
+        if ($this->property('combineResults', false)) {
+            return $this->getCombinedResults($handlers, $query, $page);
+        }
+
         foreach ($handlers as $id => $handler) {
             $class = $handler['model'];
             $results = $class::search($query)->paginate($this->property('perPage', 20));
 
             if ($results->count() === 0) {
                 $handlerResults[$id] = [
-                    'name' => Lang::get($handler['name']),
+                    'name' => e(Lang::get($handler['name'])),
                     'results' => [],
                     'count' => 0,
                 ];
@@ -231,7 +238,7 @@ class Search extends ComponentBase
 
                 if (!isset($handlerResults[$id])) {
                     $handlerResults[$id] = [
-                        'name' => Lang::get($handler['name']),
+                        'name' => e(Lang::get($handler['name'])),
                         'results' => [],
                         'count' => $results->count(),
                     ];
@@ -243,6 +250,12 @@ class Search extends ComponentBase
         }
 
         return [
+            '#search-results' => ($totalCount === 0)
+                ? $this->renderPartial('@no-results')
+                : $this->renderPartial('@results', [
+                    'results' => $handlerResults,
+                    'count' => $totalCount,
+                ]),
             'results' => $handlerResults,
             'count' => $totalCount,
         ];
@@ -287,5 +300,57 @@ class Search extends ComponentBase
 
             return $processed;
         }
+    }
+
+    protected function getCombinedResults(array $handlers, string $query, int $page)
+    {
+        $combined = [];
+        $count = 0;
+
+        foreach ($handlers as $id => $handler) {
+            $class = $handler['model'];
+            $results = $class::search($query);
+
+            $count += $results->count();
+
+            if ($results->count() > 0) {
+                foreach ($results as $result) {
+                    $processed = $this->processRecord($result, $query, $handler['record']);
+
+                    if ($processed === false) {
+                        continue;
+                    }
+
+                    if (!$this->property('displayImages', true)) {
+                        unset($processed['image']);
+                    }
+                    if ($this->property('displayHandlerName', true)) {
+                        $processed['handler'] = e(Lang::get($handler['name']));
+                    }
+
+                    $combined[] = $processed;
+                }
+            }
+        }
+
+        $results = collect($combined);
+
+        // Create paginator
+        $paginator = new LengthAwarePaginator(
+            $results->forPage($page, $this->property('perPage')),
+            $count,
+            $this->property('perPage', 20),
+            $page
+        );
+
+        return [
+            'results' => $paginator->items(),
+            'pages' => $paginator->lastPage(),
+            'currentPage' => $page,
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+            'count' => $paginator->count(),
+            'total' => $count,
+        ];
     }
 }
