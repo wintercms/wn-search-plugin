@@ -289,7 +289,9 @@ class Searchable extends ExtensionBase
      */
     public function toSearchableArray()
     {
-        if (property_exists($this, 'searchable')) {
+        if ($this->model->methodExists('getSearchableArray')) {
+            return $this->model->getSearchableArray();
+        } elseif ($this->model->propertyExists('searchable')) {
             $searchableData = [];
             $modelAttributes = Arr::dot($this->model->getAttributes());
 

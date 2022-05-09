@@ -136,7 +136,14 @@ class Searchable extends BaseSearchable
      */
     public function toSearchableArray()
     {
-        if ($this->model->propertyExists('searchable')) {
+        if ($this->model->methodExists('getSearchableArray')) {
+            $attributes = $this->model->getSearchableArray();
+
+            // Convert filenames so they don't fail the ID checks of some engines
+            $attributes['fileName'] = Str::slug(str_replace('.', '-', $this->model->getFileName()));
+
+            return $attributes;
+        } elseif ($this->model->propertyExists('searchable')) {
             $searchableData = [];
             $modelAttributes = Arr::dot($this->model->getAttributes());
 
@@ -150,6 +157,11 @@ class Searchable extends BaseSearchable
                 // Convert to dot notation
                 $attribute = str_replace(['[', ']'], ['.', ''], $attribute);
                 Arr::set($searchableData, $attribute, $modelAttributes[$attribute] ?? null);
+            }
+
+            if (!array_key_exists('fileName', $searchableData)) {
+                // Convert filenames so they don't fail the ID checks of some engines
+                $searchableData['fileName'] = Str::slug(str_replace('.', '-', $this->model->getFileName()));
             }
 
             return $searchableData;
