@@ -1,9 +1,7 @@
 <?php namespace Winter\Search\Classes;
 
 use Config;
-use Cms\Classes\Page;
 use System\Classes\PluginManager;
-use Winter\Pages\Classes\Page as StaticPage;
 use Winter\Search\Behaviors\Halcyon\Searchable as HalcyonSearchable;
 use Winter\Search\Behaviors\Searchable;
 use Winter\Storm\Support\Traits\Singleton;
@@ -17,6 +15,14 @@ class CorePluginManager
      */
     protected array $plugins = [];
 
+    /**
+     * Initialisation.
+     *
+     * Defines the currently supported first-party plugins, their searchable data, and the records
+     * to return.
+     *
+     * @return void
+     */
     protected function init()
     {
         $this->plugins = [
@@ -25,7 +31,7 @@ class CorePluginManager
                 'code' => 'Cms',
                 'name' => 'winter.search::lang.otherPlugins.cmsPages',
                 'behavior' => HalcyonSearchable::class,
-                'model' => Page::class,
+                'model' => \Cms\Classes\Page::class,
                 'searchable' => function ($model) {
                     return [
                         'title' => $model->title,
@@ -34,7 +40,7 @@ class CorePluginManager
                         'meta_description' => $model->meta_description ?? '',
                     ];
                 },
-                'record' => function ($model, $query) {
+                'record' => function ($model) {
                     return [
                         'title' => $model->title,
                         'description' => $model->description,
@@ -48,7 +54,7 @@ class CorePluginManager
                 'code' => 'Winter.Pages',
                 'name' => 'winter.search::lang.otherPlugins.staticPages',
                 'behavior' => HalcyonSearchable::class,
-                'model' => StaticPage::class,
+                'model' => \Winter\Pages\Classes\Page::class,
                 'searchable' => function ($model) {
                     return [
                         'title' => $model->getViewBag()->title,
@@ -56,12 +62,38 @@ class CorePluginManager
                         'meta_description' => $model->getViewBag()->meta_description ?? '',
                     ];
                 },
-                'record' => function ($model, $query) {
+                'record' => function ($model) {
                     return [
                         'title' => $model->getViewBag()->title,
                         'description' => $model->getViewBag()->meta_description,
                         'image' => null,
                         'url' => $model->getViewBag()->url,
+                    ];
+                },
+            ],
+            'winterBlog' => [
+                'type' => 'plugin',
+                'code' => 'Winter.Blog',
+                'name' => 'winter.search::lang.otherPlugins.winterBlog',
+                'behavior' => Searchable::class,
+                'model' => \Winter\Blog\Models\Post::class,
+                'searchable' => function ($model) {
+                    return [
+                        'title' => $model->title,
+                        'content' => $model->content,
+                        'excerpt' => $model->excerpt,
+                    ];
+                },
+                'record' => function ($model) {
+                    if (!$model->published) {
+                        return;
+                    }
+
+                    return [
+                        'title' => $model->title,
+                        'description' => $model->excerpt,
+                        'image' => (count($model->featured_images)) ? $model->featured_images[0] : null,
+                        'url' => $model->slug,
                     ];
                 },
             ],
