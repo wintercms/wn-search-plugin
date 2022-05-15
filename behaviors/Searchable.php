@@ -29,6 +29,11 @@ class Searchable extends ExtensionBase
     public static $booted = false;
 
     /**
+     * @var string[] Classes that have been booted with this behaviour.
+     */
+    public static $bootedClasses = [];
+
+    /**
      * Constructor for the behaviour.
      *
      * Attaches listeners to the model.
@@ -40,8 +45,11 @@ class Searchable extends ExtensionBase
         $this->model = $model;
         static::$extendableStaticCalledClass = get_class($this->model);
 
-        if (static::$booted) {
+        if (!in_array(static::getCalledExtensionClass(), static::$bootedClasses)) {
             $this->bootSearchable();
+        }
+        if (!static::$booted) {
+            $this->registerSearchableMacros();
             static::$booted = true;
         }
     }
@@ -53,9 +61,11 @@ class Searchable extends ExtensionBase
      */
     protected function bootSearchable()
     {
+        $class = static::getCalledExtensionClass();
+        static::$bootedClasses[] = $class;
+
         static::getCalledExtensionClass()::addGlobalScope(new SearchableScope);
         static::getCalledExtensionClass()::observe(new ModelObserver);
-        $this->registerSearchableMacros();
     }
 
     /**

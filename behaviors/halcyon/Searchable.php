@@ -19,11 +19,6 @@ class Searchable extends BaseSearchable
     protected $model;
 
     /**
-     * @var string[] Classes that have been booted with this behaviour.
-     */
-    public static $bootedClasses = [];
-
-    /**
      * Constructor for the behaviour.
      *
      * Attaches listeners to the model.
@@ -37,10 +32,10 @@ class Searchable extends BaseSearchable
 
         if (!in_array(static::getCalledExtensionClass(), static::$bootedClasses)) {
             $this->bootSearchable();
-            static::$booted = true;
         }
         if (!static::$booted) {
             $this->registerSearchableMacros();
+            static::$booted = true;
         }
     }
 
