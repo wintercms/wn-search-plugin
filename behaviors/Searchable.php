@@ -316,7 +316,7 @@ class Searchable extends ExtensionBase
             $searchableData = [];
             $modelAttributes = Arr::dot($this->model->getAttributes());
 
-            foreach ($this->searchable as $attribute) {
+            foreach ($this->model->searchable as $attribute) {
                 // Convert to dot notation
                 $attribute = str_replace(['[', ']'], ['.', ''], $attribute);
                 Arr::set($searchableData, $attribute, $modelAttributes[$attribute] ?? null);
