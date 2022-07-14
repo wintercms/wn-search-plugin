@@ -148,6 +148,25 @@ class Searchable extends ExtensionBase
     }
 
     /**
+     * Perform a search against the model's indexed data.
+     *
+     * This is the same as the static::search() method, except that it can run on an instance of the model.
+     *
+     * @param  string  $query
+     * @param  \Closure  $callback
+     * @return \Laravel\Scout\Builder
+     */
+    public function doSearch($query = '', $callback = null)
+    {
+        return app(Builder::class, [
+            'model' => $this->model,
+            'query' => $query,
+            'callback' => $callback,
+            'softDelete'=> static::usesSoftDelete() && Config::get('search.soft_delete', false),
+        ]);
+    }
+
+    /**
      * Make all instances of the model searchable.
      *
      * @param  int  $chunk
