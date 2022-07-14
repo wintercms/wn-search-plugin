@@ -51,7 +51,6 @@ return [
     ],
     'validation' => [
         'modelRequired' => 'The "model" property for the ":name" search handler must be specified (provided by ":plugin")',
-        'modelString' => 'The "model" property for the ":name" search handler must be a string (provided by ":plugin")',
         'recordRequired' => 'The "record" property for the ":name" search handler must be specified (provided by ":plugin")',
     ]
 ];

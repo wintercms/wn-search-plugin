@@ -5,12 +5,15 @@ namespace Winter\Search\Components;
 use Lang;
 use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
+use Illuminate\Database\Eloquent\Model as DbModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
+use Winter\Storm\Exception\ApplicationException;
 use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Facades\Validator;
+use Winter\Storm\Halcyon\Model as HalcyonModel;
 
 /**
  * Search component.
@@ -121,14 +124,10 @@ class Search extends ComponentBase
                 }
 
                 $validator = Validator::make($handler, [
-                    'model' => 'required|string',
+                    'model' => 'required',
                     'record' => 'required'
                 ], [
                     'model.required' => Lang::get(Plugin::LANG . 'validation.modelRequired', [
-                        'plugin' => $pluginCode,
-                        'name' => $name
-                    ]),
-                    'model.string' => Lang::get(Plugin::LANG . 'validation.modelString', [
                         'plugin' => $pluginCode,
                         'name' => $name
                     ]),
@@ -165,14 +164,10 @@ class Search extends ComponentBase
                 }
 
                 $validator = Validator::make($handler, [
-                    'model' => 'required|string',
+                    'model' => 'required',
                     'record' => 'required'
                 ], [
                     'model.required' => Lang::get(Plugin::LANG . 'validation.modelRequired', [
-                        'plugin' => $pluginCode,
-                        'name' => $name
-                    ]),
-                    'model.string' => Lang::get(Plugin::LANG . 'validation.modelString', [
                         'plugin' => $pluginCode,
                         'name' => $name
                     ]),
@@ -218,7 +213,19 @@ class Search extends ComponentBase
 
         foreach ($handlers as $id => $handler) {
             $class = $handler['model'];
-            $results = $class::search($query)->paginate($this->property('perPage', 20));
+            if (is_string($class)) {
+                $class = new $class;
+            }
+            if (!is_callable($class) && !$class instanceof DbModel && !$class instanceof HalcyonModel) {
+                throw new ApplicationException(
+                    sprintf('Model for handler "%s" must be a database or Halcyon model, or a callback', $id)
+                );
+            }
+            if (is_callable($class)) {
+                $results = $class()->doSearch($query)->paginate($this->property('perPage', 20));
+            } else {
+                $results = $class->doSearch($query)->paginate($this->property('perPage', 20));
+            }
 
             if ($results->count() === 0) {
                 $handlerResults[$id] = [
@@ -263,7 +270,7 @@ class Search extends ComponentBase
 
     protected function processRecord($record, string $query, array|callable $handler)
     {
-        $requiredAttributes = ['title', 'description', 'url', 'image'];
+        $requiredAttributes = ['title', 'description', 'url'];
 
         if (is_callable($handler)) {
             $processed = $handler($record, $query);
