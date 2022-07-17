@@ -4,7 +4,7 @@ namespace Laravel\Scout\Tests\Unit;
 
 use Config;
 use Mockery as m;
-use PluginTestCase;
+use System\Tests\Bootstrap\PluginTestCase;
 use Winter\Search\Classes\ModelObserver;
 use Winter\Search\Tests\Fixtures\SearchableModelWithSoftDelete;
 use Winter\Search\Tests\Fixtures\SearchableModelWithSensitiveAttributes;

@@ -4,7 +4,7 @@
     backupGlobals="false"
     backupStaticAttributes="false"
     beStrictAboutTestsThatDoNotTestAnything="false"
-    bootstrap="../../../tests/bootstrap.php"
+    bootstrap="../../../modules/system/tests/bootstrap/app.php"
     colors="true"
     convertErrorsToExceptions="true"
     convertNoticesToExceptions="true"
