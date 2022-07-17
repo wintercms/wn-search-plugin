@@ -3,7 +3,7 @@
 namespace Winter\Search\Tests\Cases\Traits;
 
 use Mockery as m;
-use PluginTestCase;
+use System\Tests\Bootstrap\PluginTestCase;
 use Winter\Storm\Database\Builder;
 use Winter\Search\Classes\SearchableScope;
 
