@@ -3,6 +3,7 @@
 namespace Winter\Search\Engines;
 
 use Arr;
+use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\DatabaseEngine as BaseDatabaseEngine;
 use Winter\Storm\Database\Traits\SoftDelete;
 
@@ -27,5 +28,34 @@ class DatabaseEngine extends BaseDatabaseEngine
         }
 
         return $query;
+    }
+
+    /**
+     * Get the columns marked with a given attribute.
+     *
+     * Since Winter adds Scout capabilities through behaviours, we have no way to support the
+     * attributes method of defining columns.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  string  $attributeClass
+     * @return array
+     */
+    protected function getAttributeColumns(Builder $builder, $attributeClass)
+    {
+        return [];
+    }
+
+    /**
+     * Get the full-text search options for the query.
+     *
+     * Since Winter adds Scout capabilities through behaviours, we have no way to support the
+     * attributes method of defining columns.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @return array
+     */
+    protected function getFullTextOptions(Builder $builder)
+    {
+        return [];
     }
 }
