@@ -169,7 +169,7 @@ class Search extends ComponentBase
 
         if (!count($handlers) || empty($query)) {
             return [
-                '#' . $this->getId('results') => $this->renderPartial('@no-results'),
+                '#' . $this->getId('results') => $this->renderPartial('@no-query'),
                 'results' => [],
                 'count' => 0,
             ];
