@@ -64,29 +64,6 @@ class Search extends ComponentBase
                 'validationPattern' => '^[0-9]+$',
                 'validationMessage' => Plugin::LANG . 'components.search.limit.validationMessage',
                 'group' => Plugin::LANG . 'components.search.groups.pagination',
-            ],
-            'displayImages' => [
-                'title' => Plugin::LANG . 'components.search.displayImages.title',
-                'type' => 'checkbox',
-                'default' => true,
-                'group' => Plugin::LANG . 'components.search.groups.display',
-                'showExternalParam' => false,
-            ],
-            'displayHandlerName' => [
-                'title' => Plugin::LANG . 'components.search.displayHandlerName.title',
-                'description' => Plugin::LANG . 'components.search.displayHandlerName.description',
-                'type' => 'checkbox',
-                'default' => true,
-                'group' => Plugin::LANG . 'components.search.groups.display',
-                'showExternalParam' => false,
-            ],
-            'displayPluginName' => [
-                'title' => Plugin::LANG . 'components.search.displayPluginName.title',
-                'description' => Plugin::LANG . 'components.search.displayPluginName.description',
-                'type' => 'checkbox',
-                'default' => false,
-                'group' => Plugin::LANG . 'components.search.groups.display',
-                'showExternalParam' => false,
             ]
         ];
     }
