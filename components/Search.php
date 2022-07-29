@@ -169,7 +169,7 @@ class Search extends ComponentBase
 
         if (!count($handlers) || empty($query)) {
             return [
-                '#search-results' => $this->renderPartial('@no-results'),
+                '#' . $this->getId('results') => $this->renderPartial('@no-results'),
                 'results' => [],
                 'count' => 0,
             ];
@@ -236,7 +236,7 @@ class Search extends ComponentBase
         }
 
         return [
-            '#search-results' => ($totalCount === 0)
+            '#' . $this->getId('results') => ($totalCount === 0)
                 ? $this->renderPartial('@no-results')
                 : $this->renderPartial('@results', [
                     'selectedHandler' => $handlerPage ?? array_keys($handlers)[0],
@@ -288,5 +288,16 @@ class Search extends ComponentBase
 
             return $processed;
         }
+    }
+
+    /**
+     * Gets an alias-prefixed ID for partials.
+     *
+     * @param string $id
+     * @return string
+     */
+    public function getId(string $id): string
+    {
+        return $this->alias . '-' . $id;
     }
 }

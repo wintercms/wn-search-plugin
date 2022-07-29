@@ -4,6 +4,8 @@
 
 {{ form_close() }}
 
-<div id="search-results">
-
+<div id="{{ __SELF__.getId('results') }}">
+    {% if not query %}
+        {% partial SELF ~ '::no-query' %}
+    {% endif %}
 </div>
