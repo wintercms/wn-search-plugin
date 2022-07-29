@@ -298,11 +298,7 @@ class Search extends ComponentBase
                     return false;
                 }
 
-                if (is_callable($handler[$attr])) {
-                    $processed[$attr] = $handler[$attr]($record, $query);
-                } else {
-                    $processed[$attr] = Arr::get($record, $handler[$attr], null);
-                }
+                $processed[$attr] = Arr::get($record, $handler[$attr], null);
             }
 
             foreach ($handler as $attr => $value) {
