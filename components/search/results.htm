@@ -1,5 +1,25 @@
-<div class="results">
-    <div class="types">
+<ul class="handlers">
+    {% for handler, handlerData in results %}
+    <li>
+        <a
+            href="#"
+            {% if handler == selectedHandler %} class="active" {% endif %}
+            data-request="{{ __SELF__ ~ '::onSearch' }}"
+            data-request-data="handler: '{{ handler }}', query: '{{ query }}'"
+        >
+            {{ handlerData.name }} ({{ handlerData.total }})
+        </a>
+    </li>
+    {% endfor %}
+</ul>
 
-    </div>
-</div>
+<ul class="results">
+    {% for result in results[selectedHandler].results %}
+    <li>
+        <a href="{{ result.url }}">
+            {{ result.title }}
+        </a><br>
+        <small>{{ result.description }}</small>
+    </li>
+    {% endfor %}
+</ul>

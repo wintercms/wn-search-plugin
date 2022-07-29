@@ -6,7 +6,6 @@ use Lang;
 use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
 use Illuminate\Database\Eloquent\Model as DbModel;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
@@ -64,13 +63,6 @@ class Search extends ComponentBase
                 'default' => 20,
                 'validationPattern' => '^[0-9]+$',
                 'validationMessage' => Plugin::LANG . 'components.search.limit.validationMessage',
-                'group' => Plugin::LANG . 'components.search.groups.pagination',
-            ],
-            'combineResults' => [
-                'title' => Plugin::LANG . 'components.search.combineResults.title',
-                'description' => Plugin::LANG . 'components.search.combineResults.description',
-                'type' => 'checkbox',
-                'default' => false,
                 'group' => Plugin::LANG . 'components.search.groups.pagination',
             ],
             'displayImages' => [
@@ -194,6 +186,8 @@ class Search extends ComponentBase
     {
         $query = Request::post('query');
         $page = Request::post('page', 1);
+        $handlerPage = Request::post('handler');
+
         $handlers = $this->getSelectedHandlers();
 
         if (!count($handlers) || empty($query)) {
@@ -206,10 +200,7 @@ class Search extends ComponentBase
 
         $handlerResults = [];
         $totalCount = 0;
-
-        if ($this->property('combineResults', false)) {
-            return $this->getCombinedResults($handlers, $query, $page);
-        }
+        $totalTotal = 0;
 
         foreach ($handlers as $id => $handler) {
             $class = $handler['model'];
@@ -222,9 +213,9 @@ class Search extends ComponentBase
                 );
             }
             if (is_callable($class)) {
-                $results = $class()->doSearch($query)->paginate($this->property('perPage', 20));
+                $results = $class()->doSearch($query)->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
             } else {
-                $results = $class->doSearch($query)->paginate($this->property('perPage', 20));
+                $results = $class->doSearch($query)->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
             }
 
             if ($results->count() === 0) {
@@ -232,6 +223,11 @@ class Search extends ComponentBase
                     'name' => e(Lang::get($handler['name'])),
                     'results' => [],
                     'count' => 0,
+                    'total' => 0,
+                    'pages' => 1,
+                    'currentPage' => 1,
+                    'from' => 0,
+                    'to' => 0,
                 ];
                 continue;
             }
@@ -248,8 +244,14 @@ class Search extends ComponentBase
                         'name' => e(Lang::get($handler['name'])),
                         'results' => [],
                         'count' => $results->count(),
+                        'total' => $results->total(),
+                        'pages' => $results->lastPage(),
+                        'currentPage' => $page,
+                        'from' => $results->firstItem(),
+                        'to' => $results->lastItem(),
                     ];
                     $totalCount += $results->count();
+                    $totalTotal += $results->total();
                 }
 
                 $handlerResults[$id]['results'][] = $processed;
@@ -260,11 +262,17 @@ class Search extends ComponentBase
             '#search-results' => ($totalCount === 0)
                 ? $this->renderPartial('@no-results')
                 : $this->renderPartial('@results', [
+                    'selectedHandler' => $handlerPage ?? array_keys($handlers)[0],
+                    'query' => $query,
                     'results' => $handlerResults,
                     'count' => $totalCount,
+                    'total' => $totalTotal,
                 ]),
+            'selectedHandler' => $handlerPage ?? array_keys($handlers)[0],
+            'query' => $query,
             'results' => $handlerResults,
             'count' => $totalCount,
+            'total' => $totalTotal,
         ];
     }
 
@@ -307,57 +315,5 @@ class Search extends ComponentBase
 
             return $processed;
         }
-    }
-
-    protected function getCombinedResults(array $handlers, string $query, int $page)
-    {
-        $combined = [];
-        $count = 0;
-
-        foreach ($handlers as $id => $handler) {
-            $class = $handler['model'];
-            $results = $class::search($query);
-
-            $count += $results->count();
-
-            if ($results->count() > 0) {
-                foreach ($results as $result) {
-                    $processed = $this->processRecord($result, $query, $handler['record']);
-
-                    if ($processed === false) {
-                        continue;
-                    }
-
-                    if (!$this->property('displayImages', true)) {
-                        unset($processed['image']);
-                    }
-                    if ($this->property('displayHandlerName', true)) {
-                        $processed['handler'] = e(Lang::get($handler['name']));
-                    }
-
-                    $combined[] = $processed;
-                }
-            }
-        }
-
-        $results = collect($combined);
-
-        // Create paginator
-        $paginator = new LengthAwarePaginator(
-            $results->forPage($page, $this->property('perPage')),
-            $count,
-            $this->property('perPage', 20),
-            $page
-        );
-
-        return [
-            'results' => $paginator->items(),
-            'pages' => $paginator->lastPage(),
-            'currentPage' => $page,
-            'from' => $paginator->firstItem(),
-            'to' => $paginator->lastItem(),
-            'count' => $paginator->count(),
-            'total' => $count,
-        ];
     }
 }
