@@ -6,6 +6,7 @@ use Cms\Classes\Theme;
 use Laravel\Scout\Builder;
 use Illuminate\Support\Collection as BaseCollection;
 use Winter\Search\Behaviors\Searchable as BaseSearchable;
+use Winter\Search\Classes\HalcyonIndex;
 use Winter\Search\Classes\HalcyonModelObserver;
 use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Str;
@@ -27,8 +28,8 @@ class Searchable extends BaseSearchable
      */
     public function __construct($model)
     {
-        $this->model = $model;
-        static::$extendableStaticCalledClass = get_class($this->model);
+        $this->model = $this->getIndexModel($model);
+        static::$extendableStaticCalledClass = get_class($model);
 
         if (!in_array(static::getCalledExtensionClass(), static::$bootedClasses)) {
             $this->bootSearchable();
@@ -37,6 +38,19 @@ class Searchable extends BaseSearchable
             $this->registerSearchableMacros();
             static::$booted = true;
         }
+    }
+
+    public function getIndexModel($model)
+    {
+        HalcyonIndex::setModel($model);
+        HalcyonIndex::needsUpdate();
+
+        $index = new HalcyonIndex;
+        $index->index();
+
+        HalcyonIndex::setModel(null);
+
+        return $index;
     }
 
         /**
