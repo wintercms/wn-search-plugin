@@ -190,9 +190,9 @@ class Search extends ComponentBase
                 );
             }
             if (is_callable($class)) {
-                $results = $class()->doSearch($query)->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
+                $results = $class()->doSearch($query)->getWithRelevance()->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
             } else {
-                $results = $class->doSearch($query)->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
+                $results = $class->doSearch($query)->getWithRelevance()->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
             }
 
             if ($results->count() === 0) {
