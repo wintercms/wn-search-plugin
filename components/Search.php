@@ -2,13 +2,15 @@
 
 namespace Winter\Search\Components;
 
-use Lang;
-use Winter\Search\Plugin;
 use Cms\Classes\ComponentBase;
 use Illuminate\Database\Eloquent\Model as DbModel;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
+use Winter\Search\Plugin;
 use Winter\Storm\Exception\ApplicationException;
 use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Facades\Validator;
@@ -64,7 +66,23 @@ class Search extends ComponentBase
                 'validationPattern' => '^[0-9]+$',
                 'validationMessage' => Plugin::LANG . 'components.search.limit.validationMessage',
                 'group' => Plugin::LANG . 'components.search.groups.pagination',
-            ]
+            ],
+            'grouping' => [
+                'title' => Plugin::LANG . 'components.search.grouping.title',
+                'description' => Plugin::LANG . 'components.search.grouping.description',
+                'type' => 'checkbox',
+                'default' => false,
+                'group' => Plugin::LANG . 'components.search.groups.grouping',
+            ],
+            'perGroup' => [
+                'title' => Plugin::LANG . 'components.search.perGroup.title',
+                'description' => Plugin::LANG . 'components.search.perGroup.description',
+                'type' => 'string',
+                'default' => 5,
+                'validationPattern' => '^[0-9]+$',
+                'validationMessage' => Plugin::LANG . 'components.search.perGroup.validationMessage',
+                'group' => Plugin::LANG . 'components.search.groups.grouping',
+            ],
         ];
     }
 
@@ -190,9 +208,9 @@ class Search extends ComponentBase
                 );
             }
             if (is_callable($class)) {
-                $results = $class()->doSearch($query)->getWithRelevance()->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
+                $results = $class()->doSearch($query)->getWithRelevance();
             } else {
-                $results = $class->doSearch($query)->getWithRelevance()->paginate($this->property('perPage', 20), 'page', ($handlerPage === $id) ? $page : 1);
+                $results = $class->doSearch($query)->getWithRelevance();
             }
 
             if ($results->count() === 0) {
@@ -208,6 +226,12 @@ class Search extends ComponentBase
                 ];
                 continue;
             }
+
+            if ($handlerPage !== $id) {
+                $page = 1;
+            }
+
+            $results = $this->paginateResults($results, $page);
 
             foreach ($results as $result) {
                 $processed = $this->processRecord($result, $query, $handler['record']);
@@ -232,6 +256,10 @@ class Search extends ComponentBase
                 }
 
                 $handlerResults[$id]['results'][] = $processed;
+            }
+
+            if ($this->property('grouping', false)) {
+                $results = $this->applyGrouping($handlerResults[$id]['results']);
             }
         }
 
@@ -299,5 +327,42 @@ class Search extends ComponentBase
     public function getId(string $id): string
     {
         return $this->alias . '-' . $id;
+    }
+
+    /**
+     * Creates a paginator for search results.
+     */
+    protected function paginateResults(Collection $results, int $page = 1)
+    {
+        return new LengthAwarePaginator(
+            $results,
+            $results->count(),
+            $this->property('perPage', 20),
+            $page,
+        );
+    }
+
+    /**
+     * Applies grouping to results, if required.
+     */
+    protected function applyGrouping(Collection $results)
+    {
+        $grouped = [];
+
+        foreach ($results as $result) {
+            $group = $result['group'] ?? 'Other results';
+
+            if (!isset($grouped[$group])) {
+                $grouped[$group] = [];
+            }
+
+            if (count($grouped[$group]) >= $this->property('perGroup', 5)) {
+                continue;
+            }
+
+            $grouped[$group][] = $result;
+        }
+
+        return $grouped;
     }
 }
