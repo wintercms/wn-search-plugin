@@ -13,7 +13,7 @@ class Builder extends BaseBuilder
         $relevanceCalculator = $relevanceCalculator ?? \Closure::fromCallable([$this, 'relevanceCalculator']);
 
         return $collection->map(function ($model) use ($relevanceCalculator) {
-            $model->relevance = $relevanceCalculator($model, $this->query);
+            $model->relevance = $relevanceCalculator($model, $this->wordifyQuery($this->query));
             return $model;
         })->sortByDesc('relevance');
     }
@@ -25,7 +25,7 @@ class Builder extends BaseBuilder
         $relevanceCalculator = $relevanceCalculator ?? \Closure::fromCallable([$this, 'relevanceCalculator']);
 
         return $collection->map(function ($model) use ($relevanceCalculator) {
-            $model->relevance = $relevanceCalculator($model, $this->query);
+            $model->relevance = $relevanceCalculator($model, $this->wordifyQuery($this->query));
             return $model;
         })->sortByDesc('relevance')->first();
     }
@@ -37,17 +37,27 @@ class Builder extends BaseBuilder
      * @param string $query
      * @return float|int
      */
-    public function relevanceCalculator($model, $query)
+    public function relevanceCalculator($model, array $queryWords)
     {
         // Get ranking map
         $rankingMap = $this->getRankingMap($model);
 
         $relevance = 0;
+        $multiplier = 2;
 
+        // Go through and find each word in the searchable fields, with the first word being the most important, and
+        // each word thereafter being less important
         foreach ($rankingMap as $field => $rank) {
-            if (stripos($model->{$field}, $query) !== false) {
-                // Count matches and multiply by rank
-                $relevance += substr_count(strtolower($model->{$field}), strtolower($query)) * $rank;
+            foreach ($queryWords as $query) {
+                $multiplier /= 2;
+
+                if (stripos($model->{$field}, $query) !== false) {
+                    // Count matches and multiply by rank
+                    $relevance += (
+                        (substr_count(strtolower($model->{$field}), strtolower($query)) * $rank)
+                        * $multiplier
+                    );
+                }
             }
         }
 
@@ -80,5 +90,19 @@ class Builder extends BaseBuilder
         }
 
         return array_reverse($rankingMap, true);
+    }
+
+    /**
+     * Convert a query string into an array of applicable words.
+     *
+     * This will strip all stop words and punctuation from the query string, then split each word into an array.
+     */
+    protected function wordifyQuery($query): array
+    {
+        $query = preg_replace('/[% ]+/', ' ', strtolower($query));
+
+        return array_map(function ($word) {
+            return trim($word, ' .,');
+        }, preg_split('/ +/', $query));
     }
 }

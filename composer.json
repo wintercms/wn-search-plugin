@@ -25,7 +25,8 @@
     "require": {
         "php": "^8.0",
         "composer/installers": "~1.0",
-        "laravel/scout": "^9.4.5"
+        "laravel/scout": "^9.4.5",
+        "teamtnt/tntsearch": "^4.0"
     },
     "suggest": {
         "algolia/algoliasearch-client-php": "Required to use the Algolia engine (^3.2).",

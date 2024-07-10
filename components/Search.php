@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use System\Classes\PluginManager;
+use TeamTNT\TNTSearch\Stemmer\PorterStemmer;
 use Winter\Search\Plugin;
 use Winter\Storm\Exception\ApplicationException;
 use Winter\Storm\Support\Arr;
@@ -48,6 +49,12 @@ class Search extends ComponentBase
                 'type' => 'set',
                 'required' => true,
                 'placeholder' => Lang::get(Plugin::LANG . 'components.search.handler.placeholder'),
+            ],
+            'showExcerpts' => [
+                'title' => Plugin::LANG . 'components.search.showExcerpts.title',
+                'description' => Plugin::LANG . 'components.search.showExcerpts.description',
+                'type' => 'checkbox',
+                'default' => true,
             ],
             'limit' => [
                 'title' => Plugin::LANG . 'components.search.limit.title',
@@ -208,9 +215,9 @@ class Search extends ComponentBase
                 );
             }
             if (is_callable($class)) {
-                $results = $class()->doSearch($query)->getWithRelevance();
+                $results = $class()->doSearch($this->processQuery($query))->getWithRelevance();
             } else {
-                $results = $class->doSearch($query)->getWithRelevance();
+                $results = $class->doSearch($this->processQuery($query))->getWithRelevance();
             }
 
             if ($results->count() === 0) {
@@ -259,7 +266,7 @@ class Search extends ComponentBase
             }
 
             if ($this->property('grouping', false)) {
-                $results = $this->applyGrouping($handlerResults[$id]['results']);
+                $handlerResults[$id]['results'] = $this->applyGrouping($handlerResults[$id]['results']);
             }
         }
 
@@ -354,6 +361,22 @@ class Search extends ComponentBase
     }
 
     /**
+     * Determines if results are being grouped.
+     */
+    public function isGrouped(): bool
+    {
+        return $this->property('grouping', false);
+    }
+
+    /**
+     * Determines if excerpts should be shown.
+     */
+    public function showExcerpts(): bool
+    {
+        return $this->property('showExcerpts', true);
+    }
+
+    /**
      * Creates a paginator for search results.
      */
     protected function paginateResults(Collection $results, int $page = 1)
@@ -369,7 +392,7 @@ class Search extends ComponentBase
     /**
      * Applies grouping to results, if required.
      */
-    protected function applyGrouping(Collection $results)
+    protected function applyGrouping(array $results)
     {
         $grouped = [];
 
@@ -388,5 +411,174 @@ class Search extends ComponentBase
         }
 
         return $grouped;
+    }
+
+    /**
+     * Processes the search query.
+     *
+     * This applies some processing of the search query to get better search results. It does the following:
+     *
+     * - Removes any percentage signs from the query, in order to not get full wildcard searches.
+     * - Strips punctuation from the query.
+     * - Removes any stop words.
+     * - Stems each word in the query, so words with the incorrect inflection or pluralisation can still be found.
+     * - Replaces spacing with percentages, in order to allow words that aren't next to each other to be found.
+     * - Trims the query.
+     */
+    protected function processQuery(string $query): string
+    {
+        $query = str_replace('%', '', strtolower($query));
+        $words = preg_split('/[ -]+/', $query, -1, PREG_SPLIT_NO_EMPTY);
+
+        // Strip punctuation
+        $words = array_map(function ($word) {
+            return preg_replace('/[^a-z0-9]/', '', $word);
+        }, $words);
+
+        // Remove stop words
+        $words = array_filter($words, function ($word) {
+            return $this->isStopWord($word);
+        });
+
+        // Stem words
+        $words = array_map(function ($word) {
+            return PorterStemmer::stem($word);
+        }, $words);
+
+        // Replace spaces with wildcards to match partial words and trim query
+        return trim(implode('% %', $words));
+    }
+
+    protected function isStopWord(string $word): bool
+    {
+        return !in_array(strtolower($word), [
+            'i',
+            'me',
+            'my',
+            'myself',
+            'we',
+            'our',
+            'ours',
+            'ourselves',
+            'you',
+            'your',
+            'yours',
+            'yourself',
+            'yourselves',
+            'he',
+            'him',
+            'his',
+            'himself',
+            'she',
+            'her',
+            'hers',
+            'herself',
+            'it',
+            'its',
+            'itself',
+            'they',
+            'them',
+            'their',
+            'theirs',
+            'themselves',
+            'what',
+            'which',
+            'who',
+            'whom',
+            'this',
+            'that',
+            'these',
+            'those',
+            'am',
+            'is',
+            'are',
+            'was',
+            'were',
+            'be',
+            'been',
+            'being',
+            'have',
+            'has',
+            'had',
+            'having',
+            'do',
+            'does',
+            'did',
+            'doing',
+            'a',
+            'an',
+            'the',
+            'and',
+            'but',
+            'if',
+            'or',
+            'because',
+            'as',
+            'until',
+            'while',
+            'of',
+            'at',
+            'by',
+            'for',
+            'with',
+            'about',
+            'against',
+            'between',
+            'into',
+            'through',
+            'during',
+            'before',
+            'after',
+            'above',
+            'below',
+            'to',
+            'from',
+            'up',
+            'down',
+            'in',
+            'out',
+            'on',
+            'off',
+            'over',
+            'under',
+            'again',
+            'further',
+            'then',
+            'once',
+            'here',
+            'there',
+            'when',
+            'where',
+            'why',
+            'how',
+            'all',
+            'any',
+            'both',
+            'each',
+            'few',
+            'more',
+            'most',
+            'other',
+            'some',
+            'such',
+            'no',
+            'nor',
+            'not',
+            'only',
+            'own',
+            'same',
+            'so',
+            'than',
+            'too',
+            'very',
+            's',
+            't',
+            'can',
+            'will',
+            'just',
+            'don',
+            'should',
+            'now',
+        ]);
     }
 }
