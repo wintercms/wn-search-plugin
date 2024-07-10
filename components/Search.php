@@ -281,18 +281,44 @@ class Search extends ComponentBase
         ];
     }
 
+    /**
+     * Processes each record returned by the search handler.
+     *
+     * This method calls the search handler and allows the search handler to manage and format how the result appears
+     * in the results list. Each result should be an array with at least the following information:
+     *
+     * - `title`: The title of the result.
+     * - `description`: A brief description of the result.
+     * - `url`: The URL to the result.
+     *
+     * In addition, you may provide these optional attributes:
+     *
+     * - `group`: The group to which the result belongs.
+     * - `label`: A label to display for the result.
+     * - `image`: An image to display next to the result.
+     */
     protected function processRecord($record, string $query, array|callable $handler)
     {
         $requiredAttributes = ['title', 'description', 'url'];
+        $optionalAttributes = ['group', 'label', 'image'];
 
         if (is_callable($handler)) {
             $processed = $handler($record, $query);
+
+            if (!is_array($processed)) {
+                return false;
+            }
 
             foreach ($requiredAttributes as $attr) {
                 if (!array_key_exists($attr, $processed)) {
                     return false;
                 }
             }
+
+            // Remove processed values that are not required or optional
+            $processed = array_filter($processed, function ($key) use ($requiredAttributes, $optionalAttributes) {
+                return in_array($key, array_merge($requiredAttributes, $optionalAttributes));
+            }, ARRAY_FILTER_USE_KEY);
 
             return $processed;
         } else {
@@ -302,12 +328,10 @@ class Search extends ComponentBase
                 if (!isset($handler[$attr])) {
                     return false;
                 }
-
-                $processed[$attr] = Arr::get($record, $handler[$attr], null);
             }
 
             foreach ($handler as $attr => $value) {
-                if (in_array($attr, $requiredAttributes)) {
+                if (in_array($attr, array_merge($requiredAttributes, $optionalAttributes))) {
                     continue;
                 }
 
