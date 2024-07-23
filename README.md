@@ -240,12 +240,17 @@ Property | Description
 
 ### Record handler
 
-Each search handler may also provide a result handler to finely tune how you wish to display or filter the results. At its most simplest, the record handler simply expects an array to be returned for each record that contains 4 properties:
+Each search handler may also provide a result handler to finely tune how you wish to display or filter the results. At its most simplest, the record handler simply expects an array to be returned for each record that contains 3 properties:
 
 - `title`: The title of the result.
-- `image`: The path to a corresponding image for the result.
 - `description`: Additional context for the result.
 - `url`: The URL that the result will point to.
+
+It may also optionally provide the following properties to provide more context:
+
+- `group`: The group that this result belongs to, when using grouped results.
+- `label`: The label of the result, which may provide more context or grouping for results.
+- `image`: The path to a corresponding image for the result.
 
 You may, of course, define additional properties in your array.
 
