@@ -14,12 +14,44 @@
 </ul>
 
 <ul class="results">
-    {% for result in results[selectedHandler].results %}
-    <li>
-        <a href="{{ result.url }}">
-            {{ result.title }}
-        </a><br>
-        <small>{{ result.description }}</small>
-    </li>
-    {% endfor %}
+    {% if __SELF__.isGrouped %}
+        {% for group, results in results[selectedHandler].results %}
+        <li>
+            <strong>{{ group }}</strong>
+            <ul>
+                {% for result in results %}
+                <li>
+                    {% if result.label %}
+                        <span class="label">{{ result.label }}</span><br>
+                    {% endif %}
+
+                    <a href="{{ result.url }}">
+                        {{ result.title }}
+                    </a><br>
+
+                    {% if __SELF__.showExcerpts %}
+                        <small>{{ result.description }}</small>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    {% else %}
+        {% for result in results[selectedHandler].results %}
+        <li>
+            {% if result.label %}
+                <span class="label">{{ result.label }}</span><br>
+            {% endif %}
+
+            <a href="{{ result.url }}">
+                {{ result.title }}
+            </a><br>
+
+            {% if __SELF__.showExcerpts %}
+                <small>{{ result.description }}</small>
+            {% endif %}
+        </li>
+        {% endfor %}
+    {% endif %}
 </ul>

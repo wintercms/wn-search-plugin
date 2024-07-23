@@ -3,7 +3,7 @@
 namespace Winter\Search\Behaviors\Halcyon;
 
 use Cms\Classes\Theme;
-use Laravel\Scout\Builder;
+use Winter\Search\Classes\Builder;
 use Illuminate\Support\Collection as BaseCollection;
 use Winter\Search\Behaviors\Searchable as BaseSearchable;
 use Winter\Search\Classes\HalcyonIndex;
@@ -154,7 +154,7 @@ class Searchable extends BaseSearchable
     /**
      * Get the requested models from an array of object IDs.
      *
-     * @param  \Laravel\Scout\Builder  $builder
+     * @param  \Winter\Search\Classes\Builder  $builder
      * @param  array  $ids
      * @return mixed
      */
@@ -166,7 +166,7 @@ class Searchable extends BaseSearchable
     /**
      * Get a query builder for retrieving the requested models from an array of object IDs.
      *
-     * @param  \Laravel\Scout\Builder  $builder
+     * @param  \Winter\Search\Classes\Builder  $builder
      * @param  array  $ids
      * @return mixed
      */

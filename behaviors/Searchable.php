@@ -10,7 +10,7 @@ use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Facades\Config;
 use Winter\Storm\Database\Traits\SoftDelete;
 use Illuminate\Support\Collection as BaseCollection;
-use Laravel\Scout\Builder;
+use Winter\Search\Classes\Builder;
 use Laravel\Scout\Scout;
 use Laravel\Scout\Searchable as BaseSearchable;
 
@@ -133,7 +133,7 @@ class Searchable extends ExtensionBase
      *
      * @param  string  $query
      * @param  \Closure  $callback
-     * @return \Laravel\Scout\Builder
+     * @return \Winter\Search\Classes\Builder
      */
     public static function search($query = '', $callback = null)
     {
@@ -154,7 +154,7 @@ class Searchable extends ExtensionBase
      *
      * @param  string  $query
      * @param  \Closure  $callback
-     * @return \Laravel\Scout\Builder
+     * @return \Winter\Search\Classes\Builder
      */
     public function doSearch($query = '', $callback = null)
     {
@@ -227,7 +227,7 @@ class Searchable extends ExtensionBase
     /**
      * Get the requested models from an array of object IDs.
      *
-     * @param  \Laravel\Scout\Builder  $builder
+     * @param  \Winter\Search\Classes\Builder  $builder
      * @param  array  $ids
      * @return mixed
      */
@@ -239,7 +239,7 @@ class Searchable extends ExtensionBase
     /**
      * Get a query builder for retrieving the requested models from an array of object IDs.
      *
-     * @param  \Laravel\Scout\Builder  $builder
+     * @param  \Winter\Search\Classes\Builder  $builder
      * @param  array  $ids
      * @return mixed
      */
