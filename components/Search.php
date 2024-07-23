@@ -204,6 +204,15 @@ class Search extends ComponentBase
         $totalCount = 0;
         $totalTotal = 0;
 
+        $processedQuery = $this->processQuery($query);
+        if (empty($processedQuery)) {
+            return [
+                '#' . $this->getId('results') => $this->renderPartial('@no-query'),
+                'results' => [],
+                'count' => 0,
+            ];
+        }
+
         foreach ($handlers as $id => $handler) {
             $class = $handler['model'];
             if (is_string($class)) {
@@ -214,10 +223,11 @@ class Search extends ComponentBase
                     sprintf('Model for handler "%s" must be a database or Halcyon model, or a callback', $id)
                 );
             }
+
             if (is_callable($class)) {
-                $results = $class()->doSearch($this->processQuery($query))->getWithRelevance();
+                $results = $class()->doSearch($processedQuery)->getWithRelevance();
             } else {
-                $results = $class->doSearch($this->processQuery($query))->getWithRelevance();
+                $results = $class->doSearch($processedQuery)->getWithRelevance();
             }
 
             if ($results->count() === 0) {
