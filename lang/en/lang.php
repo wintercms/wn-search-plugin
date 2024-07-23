@@ -8,6 +8,7 @@ return [
     'otherPlugins' => [
         'cmsPages' => 'CMS Pages',
         'staticPages' => 'Static Pages',
+        'winterBlog' => 'Winter Blog',
     ],
     'components' => [
         'search' => [
@@ -16,11 +17,24 @@ return [
             'groups' => [
                 'pagination' => 'Pagination',
                 'display' => 'Display',
+                'grouping' => 'Result grouping',
             ],
             'handler' => [
                 'title' => 'Search handlers',
                 'description' => 'Select search handlers that have been registered through a plugin\'s "registerSearchHandlers" method. You may select more than one.',
                 'placeholder' => 'Select one or more',
+            ],
+            'fuzzySearch' => [
+                'title' => 'Fuzzy search?',
+                'description' => 'Allows the search query to match records more loosely. Some index providers may already provide fuzzy searching, so only enable this if necessary.',
+            ],
+            'orderByRelevance' => [
+                'title' => 'Order by relevance?',
+                'description' => 'Runs a custom relevance algorithm on results and orders based on relevancy. This is recommended only for database or collection search indexes, as other providers have their own relevance algorithms.',
+            ],
+            'showExcerpts' => [
+                'title' => 'Show excerpts?',
+                'description' => 'If checked, excerpts from the result content will be displayed in search results.',
             ],
             'limit' => [
                 'title' => 'Results limit',
@@ -32,20 +46,14 @@ return [
                 'description' => 'Define the amount of results you wish to retrieve per page. Set to 0 to have no pagination.',
                 'validationMessage' => 'Results per page must be a number',
             ],
-            'combineResults' => [
-                'title' => 'Combine results',
-                'description' => 'If multiple search handlers are included, ticking this will combine the results into one result array. Otherwise, the results array will be grouped by the search handler name.',
+            'grouping' => [
+                'title' => 'Enable grouping?',
+                'description' => 'If enabled, results will be grouped by logical groupings, such as categories or pages.',
             ],
-            'displayImages' => [
-                'title' => 'Show images',
-            ],
-            'displayHandlerName' => [
-                'title' => 'Show search handler name',
-                'description' => 'Useful if you have combined results and wish to show the handler that provided the result',
-            ],
-            'displayPluginName' => [
-                'title' => 'Show plugin name',
-                'description' => 'Useful if you have combined results and wish to show the plugin that provided the result',
+            'perGroup' => [
+                'title' => 'Results per group',
+                'description' => 'Define the upper limit of results you wish to retrieve per group. Set to 0 to have no limit.',
+                'validationMessage' => 'Results per group must be a number',
             ],
         ],
     ],

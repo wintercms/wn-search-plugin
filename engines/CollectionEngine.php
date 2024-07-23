@@ -2,16 +2,16 @@
 
 namespace Winter\Search\Engines;
 
-use Arr;
 use Laravel\Scout\Engines\CollectionEngine as BaseCollectionEngine;
 use Winter\Storm\Database\Traits\SoftDelete;
+use Winter\Storm\Support\Arr;
 
 class CollectionEngine extends BaseCollectionEngine
 {
     /**
      * Ensure that soft delete handling is properly applied to the query.
      *
-     * @param  \Laravel\Scout\Builder  $builder
+     * @param  \Winter\Search\Classes\Builder  $builder
      * @param  \Illuminate\Database\Query\Builder  $query
      * @return \Illuminate\Database\Query\Builder
      */
