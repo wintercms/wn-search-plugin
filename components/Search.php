@@ -13,7 +13,6 @@ use System\Classes\PluginManager;
 use TeamTNT\TNTSearch\Stemmer\PorterStemmer;
 use Winter\Search\Plugin;
 use Winter\Storm\Exception\ApplicationException;
-use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Facades\Validator;
 use Winter\Storm\Halcyon\Model as HalcyonModel;
 
@@ -49,6 +48,18 @@ class Search extends ComponentBase
                 'type' => 'set',
                 'required' => true,
                 'placeholder' => Lang::get(Plugin::LANG . 'components.search.handler.placeholder'),
+            ],
+            'fuzzySearch' => [
+                'title' => Plugin::LANG . 'components.search.fuzzySearch.title',
+                'description' => Plugin::LANG . 'components.search.fuzzySearch.description',
+                'type' => 'checkbox',
+                'default' => false,
+            ],
+            'orderByRelevance' => [
+                'title' => Plugin::LANG . 'components.search.orderByRelevance.title',
+                'description' => Plugin::LANG . 'components.search.orderByRelevance.description',
+                'type' => 'checkbox',
+                'default' => false,
             ],
             'showExcerpts' => [
                 'title' => Plugin::LANG . 'components.search.showExcerpts.title',
@@ -204,13 +215,17 @@ class Search extends ComponentBase
         $totalCount = 0;
         $totalTotal = 0;
 
-        $processedQuery = $this->processQuery($query);
-        if (empty($processedQuery)) {
-            return [
-                '#' . $this->getId('results') => $this->renderPartial('@no-query'),
-                'results' => [],
-                'count' => 0,
-            ];
+        if ($this->property('fuzzySearch', false)) {
+            $processedQuery = $this->processQuery($query);
+            if (empty($processedQuery)) {
+                return [
+                    '#' . $this->getId('results') => $this->renderPartial('@no-query'),
+                    'results' => [],
+                    'count' => 0,
+                ];
+            }
+        } else {
+            $processedQuery = $query;
         }
 
         foreach ($handlers as $id => $handler) {
@@ -225,9 +240,15 @@ class Search extends ComponentBase
             }
 
             if (is_callable($class)) {
-                $results = $class()->doSearch($processedQuery)->getWithRelevance();
+                $search = $class()->doSearch($processedQuery);
             } else {
-                $results = $class->doSearch($processedQuery)->getWithRelevance();
+                $search = $class->doSearch($processedQuery);
+            }
+
+            if ($this->property('orderByRelevance', false)) {
+                $results = $search->getWithRelevance();
+            } else {
+                $results = $search->get();
             }
 
             if ($results->count() === 0) {
