@@ -34,7 +34,7 @@ class SearchableModelTest extends PluginTestCase
         $this->assertEquals($recordIds[2], $resultIds[3]);
         $this->assertEquals($recordIds[3], $resultIds[4]);
 
-        $result = SearchableModel::search('TestQuery')->firstWithRelevance();
+        $result = SearchableModel::search('TestQuery')->firstRelevant();
 
         $this->assertEquals($recordIds[4], $result->id);
     }

@@ -18,7 +18,7 @@ class Builder extends BaseBuilder
         })->sortByDesc('relevance');
     }
 
-    public function firstWithRelevance(?callable $relevanceCalculator = null)
+    public function firstRelevant(?callable $relevanceCalculator = null)
     {
         $collection = $this->engine()->get($this);
 
