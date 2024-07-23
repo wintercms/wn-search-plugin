@@ -306,3 +306,39 @@ The callback method may also return `false` to exclude the record from the resul
     ];
 }
 ```
+
+## Result relevancy
+
+By default, results in the Search plugin are not ordered in any particular way to account for the relevancy of the result. While this may be fine in cases where you are using index engines like Algolia or Meilisearch, which have their own relevancy algorithms (or can be configured as such), this may affect the results when using the Database and Collection index engines, which have no relevancy system.
+
+In order to support a level of relevancy in these engines, results can be post-processed after being retrieved from the index to assign a relevancy score. Relevancy in this system is determined by the order of the property names in the `$searchable` definition for the index.
+
+For example, with the below definition:
+
+```php
+public $searchable = [
+    'title',
+    'description',
+    'keywords',
+];
+```
+
+The `title` field will be the most relevant field, followed by the `description` and then `keywords`. A match in the `title` is given greater weight than a match in the `description`, which is given more weight than a match in the `keywords`.
+
+The relevancy scoring also takes into account the words used in the query. For example, if the query `install winter cms` was used, the word `install` is given more weight than `winter`, which is then given more weight than the word `cms`.
+
+To enable result relevancy, you may call the `getWithRelevance()` or `firstRelevant()` methods following any search:
+
+```php
+$results = \Acme\Blog\BlogSearch::doSearch('install winter cms')->getWithRelevance();
+```
+
+`getWithRelevance()` will retrieve all records, ordered by relevancy score, whilst `firstRelevant()` will retrieve only the most relevant record.
+
+If you wish to customise the relevancy scoring, you may also provide a callable to both methods. The callable must accept two arguments, a model instance, and an array of words from the query, and return a score as a `float` or an `int`, which will be used to order the results descendingly (higher score = more relevant). Each record found in the index will be run through this callable.
+
+```php
+$results = \Acme\Blog\BlogSearch::doSearch('install winter cms')->getWithRelevance(function ($model, array $words) {
+    // Score each record and return score as a integer or float.
+});
+```
