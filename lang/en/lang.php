@@ -8,7 +8,7 @@ return [
     'otherPlugins' => [
         'cmsPages' => 'CMS Pages',
         'staticPages' => 'Static Pages',
-        'winterBlog' => 'Winter Blog',
+        'winterBlog' => 'Winter Blog Posts',
     ],
     'components' => [
         'search' => [

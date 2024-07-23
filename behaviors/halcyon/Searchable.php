@@ -6,6 +6,7 @@ use Cms\Classes\Theme;
 use Winter\Search\Classes\Builder;
 use Illuminate\Support\Collection as BaseCollection;
 use Winter\Search\Behaviors\Searchable as BaseSearchable;
+use Winter\Search\Classes\HalcyonIndex;
 use Winter\Search\Classes\HalcyonModelObserver;
 use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Str;
@@ -14,9 +15,24 @@ use Winter\Storm\Support\Facades\Config;
 class Searchable extends BaseSearchable
 {
     /**
-     * @var \Winter\Storm\Halcyon\Model $model The model instance being extended
+     * @var \Winter\Storm\Halcyon\Model $model The model instance being extended.
      */
-    protected $model;
+    protected $baseModel;
+
+    /**
+     * @var array<string, \Winter\Search\Classes\HalcyonIndex> Index models created for individual Halcyon model types.
+     */
+    public static $indexProxies = [];
+
+    /**
+     * @var boolean Whether the global search functionality has been booted.
+     */
+    public static $booted = false;
+
+    /**
+     * @var string[] Classes that have been booted with this behaviour.
+     */
+    public static $bootedClasses = [];
 
     /**
      * Constructor for the behaviour.
@@ -27,28 +43,96 @@ class Searchable extends BaseSearchable
      */
     public function __construct($model)
     {
-        $this->model = $model;
-        static::$extendableStaticCalledClass = get_class($this->model);
+        $this->baseModel = $model;
+        $this->model = $this->getIndexModel($model);
 
-        if (!in_array(static::getCalledExtensionClass(), static::$bootedClasses)) {
+        if (!in_array(get_class($this->baseModel), static::$bootedClasses)) {
             $this->bootSearchable();
         }
+
         if (!static::$booted) {
             $this->registerSearchableMacros();
             static::$booted = true;
         }
     }
 
-        /**
+    /**
+     * Retrieves the index proxy for the given Halcyon model, creating one if it doesn't exist.
+     */
+    public function getIndexModel(\Winter\Storm\Halcyon\Model|string $model): HalcyonIndex
+    {
+        if (array_key_exists(get_class($this->baseModel), static::$indexProxies)) {
+            return static::$indexProxies[get_class($this->baseModel)];
+        }
+
+        HalcyonIndex::setModel($model);
+        HalcyonIndex::needsUpdate();
+
+        $index = new HalcyonIndex;
+
+        // Halcyon index will double-boot this behaviour when getting records, so we'll prevent
+        // it from double-booting the index itself.
+        if (!array_key_exists(get_class($this->baseModel), static::$indexProxies)) {
+            $index->setIdentifier();
+            static::$indexProxies[get_class($this->baseModel)] = $index;
+        }
+
+        HalcyonIndex::setModel(null);
+
+        return $index;
+    }
+
+    /**
      * Boot the trait.
      *
      * @return void
      */
     protected function bootSearchable()
     {
-        $class = static::getCalledExtensionClass();
+        $class = get_class($this->baseModel);
         static::$bootedClasses[] = $class;
         new HalcyonModelObserver(new $class);
+    }
+
+    /**
+     * Perform a search against the model's indexed data.
+     *
+     * @param  string  $query
+     * @param  \Closure  $callback
+     * @return \Laravel\Scout\Builder
+     */
+    public static function search($query = '', $callback = null)
+    {
+        $model = static::getCalledExtensionClass();
+        HalcyonIndex::setModel($model);
+
+        return app(Builder::class, [
+            'model' => new $model,
+            'query' => $query,
+            'callback' => $callback,
+            'softDelete'=> static::usesSoftDelete() && Config::get('search.soft_delete', false),
+        ]);
+    }
+
+    /**
+     * Perform a search against the model's indexed data.
+     *
+     * This is the same as the static::search() method, except that it can run on an instance of the model.
+     *
+     * @param  string  $query
+     * @param  \Closure  $callback
+     * @return \Laravel\Scout\Builder
+     */
+    public function doSearch($query = '', $callback = null)
+    {
+        HalcyonIndex::setModel($this->baseModel);
+
+        return app(Builder::class, [
+            'model' => $this->model,
+            'query' => $query,
+            'callback' => $callback,
+            'softDelete'=> static::usesSoftDelete() && Config::get('search.soft_delete', false),
+        ]);
     }
 
     /**
