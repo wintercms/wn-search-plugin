@@ -1,6 +1,6 @@
 # Search Plugin
 
-[![Build Status](https://img.shields.io/github/workflow/status/wintercms/wn-search-plugin/Tests)](https://github.com/wintercms/wn-search-plugin/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/wintercms/wn-search-plugin/tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/wintercms/wn-search-plugin/actions)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/wintercms/wn-search-plugin/blob/master/LICENCE.md)
 [![Discord](https://img.shields.io/discord/816852513684193281?label=discord&style=flat-square)](https://discord.gg/D5MFSPH6Ux)
 
