@@ -9,41 +9,21 @@ on:
 jobs:
   phpUnitTests:
     name: ${{ matrix.operatingSystem }} / PHP ${{ matrix.phpVersion }}
-    runs-on: ${{ matrix.operatingSystem }}
+    runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
-        operatingSystem: [ubuntu-latest]
-        phpVersion: ['8.1', '8.2', '8.3']
-      fail-fast: false
-    env:
-      extensions: curl, fileinfo, gd, mbstring, openssl, pdo, pdo_sqlite, sqlite3, xml, zip
+        phpVersion: ['8.1', '8.2', '8.3', '8.4']
     concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-${{ matrix.operatingSystem }}-${{ matrix.phpVersion }}
+      group: ${{ github.ref }}-${{ github.workflow }}-${{ matrix.phpVersion }}
       cancel-in-progress: true
     steps:
-      - name: Checkout Winter CMS
-        uses: actions/checkout@v4
-        with:
-          repository: wintercms/winter
-          ref: develop
-
-      - name: Checkout Winter Search plugin
-        uses: actions/checkout@v4
-        with:
-          path: plugins/winter/search
-
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
+      - name: Setup Winter
+        uses: wintercms/setup-winter-action@v1
         with:
           php-version: ${{ matrix.phpVersion }}
-          tools: composer:v2
-          extensions: ${{ env.extensions }}
-
-      - name: Install Composer dependencies
-        run: |
-            sed -i 's|plugins/myauthor/\*/composer.json|plugins/*/*/composer.json|g' composer.json
-            composer install --no-interaction --no-progress --no-scripts
+          plugin-author: winter
+          plugin-name: search
 
       - name: Run tests
         run: php artisan winter:test -p Winter.Search
