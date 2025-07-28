@@ -41,7 +41,6 @@ class DeleteAllIndexesCommand extends Command
 
         try {
             $manager->engine()->deleteAllIndexes();
-
             $this->info('All indexes deleted successfully.');
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
