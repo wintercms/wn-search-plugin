@@ -2,7 +2,7 @@
 
 namespace Winter\Search\Classes;
 
-use Config;
+use Winter\Storm\Support\Facades\Config;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;

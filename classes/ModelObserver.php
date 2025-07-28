@@ -2,9 +2,9 @@
 
 namespace Winter\Search\Classes;
 
-use Config;
 use Laravel\Scout\ModelObserver as BaseModelObserver;
 use Winter\Storm\Database\Traits\SoftDelete;
+use Winter\Storm\Support\Facades\Config;
 
 /**
  * Model Observer wrapper.

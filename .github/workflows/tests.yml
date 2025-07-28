@@ -13,14 +13,15 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        phpVersion: ['8.1', '8.2', '8.3', '8.4']
+        phpVersion: ['8.2', '8.3', '8.4' ]
     concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-${{ matrix.phpVersion }}
+      group: tests-${{ github.ref }}-${{ github.workflow }}-${{ matrix.phpVersion }}
       cancel-in-progress: true
     steps:
       - name: Setup Winter
         uses: wintercms/setup-winter-action@v1
         with:
+          winter-ref: wip/1.3
           php-version: ${{ matrix.phpVersion }}
           plugin-author: winter
           plugin-name: search
