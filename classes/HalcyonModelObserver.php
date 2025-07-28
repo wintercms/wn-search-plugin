@@ -2,9 +2,9 @@
 
 namespace Winter\Search\Classes;
 
-use Config;
 use Laravel\Scout\ModelObserver as BaseModelObserver;
 use Winter\Storm\Halcyon\Model;
+use Winter\Storm\Support\Facades\Config;
 
 /**
  * Halcyon Model Observer.
@@ -29,7 +29,7 @@ class HalcyonModelObserver extends BaseModelObserver
                     return;
                 }
 
-                if (! $this->forceSaving && ! $model->searchIndexShouldBeUpdated()) {
+                if (!$this->forceSaving && !$model->searchIndexShouldBeUpdated()) {
                     return;
                 }
 
@@ -49,7 +49,7 @@ class HalcyonModelObserver extends BaseModelObserver
                     return;
                 }
 
-                if (! $model->wasSearchableBeforeDelete()) {
+                if (!$model->wasSearchableBeforeDelete()) {
                     return;
                 }
 

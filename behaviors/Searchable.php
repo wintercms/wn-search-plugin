@@ -9,6 +9,7 @@ use Winter\Storm\Extension\ExtensionBase;
 use Winter\Storm\Support\Arr;
 use Winter\Storm\Support\Facades\Config;
 use Winter\Storm\Database\Traits\SoftDelete;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Collection as BaseCollection;
 use Winter\Search\Classes\Builder;
 use Laravel\Scout\Scout;
@@ -73,7 +74,7 @@ class Searchable extends ExtensionBase
      *
      * @return void
      */
-    protected function registerSearchableMacros()
+    public function registerSearchableMacros()
     {
         $self = $this;
 
@@ -83,6 +84,14 @@ class Searchable extends ExtensionBase
 
         BaseCollection::macro('unsearchable', function () use ($self) {
             $self->queueRemoveFromSearch($this);
+        });
+
+        BaseCollection::macro('searchableSync', function () use ($self) {
+            $self->syncMakeSearchable($this);
+        });
+
+        BaseCollection::macro('unsearchableSync', function () use ($self) {
+            $self->syncRemoveFromSearch($this);
         });
     }
 
@@ -99,7 +108,7 @@ class Searchable extends ExtensionBase
         }
 
         if (!Config::get('search.queue')) {
-            return $models->first()->searchableUsing()->update($models);
+            return $this->syncMakeSearchable($models);
         }
 
         dispatch((new Scout::$makeSearchableJob($models))
@@ -120,7 +129,7 @@ class Searchable extends ExtensionBase
         }
 
         if (!Config::get('search.queue')) {
-            return $models->first()->searchableUsing()->delete($models);
+            return $this->syncRemoveFromSearch($models);
         }
 
         dispatch(new Scout::$removeFromSearchJob($models))
@@ -174,20 +183,40 @@ class Searchable extends ExtensionBase
      */
     public static function makeAllSearchable($chunk = null)
     {
+        static::makeAllSearchableQuery()->searchable($chunk);
+    }
+
+    /**
+     * Get a query builder for making all instances of the model searchable.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function makeAllSearchableQuery()
+    {
         $model = static::getCalledExtensionClass();
         $self = new $model;
 
         $softDelete = static::usesSoftDelete() && config('scout.soft_delete', false);
 
-        $self->newQuery()
+        return $self->newQuery()
             ->when(true, function ($query) use ($self) {
-                static::makeAllSearchableUsing($query);
+                $self->makeAllSearchableUsing($query);
             })
             ->when($softDelete, function ($query) {
                 $query->withTrashed();
             })
-            ->orderBy($self->getKeyName())
-            ->searchable($chunk);
+            ->orderBy($self->qualifyColumn($self->getScoutKeyName()));
+    }
+
+    /**
+     * Modify the collection of models being made searchable.
+     *
+     * @param  \Illuminate\Support\Collection  $models
+     * @return \Illuminate\Support\Collection
+     */
+    public function makeSearchableUsing(BaseCollection $models)
+    {
+        return $models;
     }
 
     /**
@@ -196,7 +225,7 @@ class Searchable extends ExtensionBase
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected static function makeAllSearchableUsing($query)
+    protected function makeAllSearchableUsing(EloquentBuilder $query)
     {
         return $query;
     }
@@ -209,6 +238,16 @@ class Searchable extends ExtensionBase
     public function searchable()
     {
         $this->model->newCollection([$this->model])->searchable();
+    }
+
+    /**
+     * Synchronously make the given model instance searchable.
+     *
+     * @return void
+     */
+    public function searchableSync()
+    {
+        $this->model->newCollection([$this])->searchableSync();
     }
 
     /**
@@ -374,7 +413,7 @@ class Searchable extends ExtensionBase
      */
     public function getSearchKeyName()
     {
-        return $this->model->getQualifiedKeyName();
+        return $this->model->getKeyName();
     }
 
     /**

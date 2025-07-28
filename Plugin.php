@@ -82,10 +82,13 @@ class Plugin extends PluginBase
     protected function registerCommands()
     {
         $this->commands([
+            \Winter\Search\Console\DeleteAllIndexesCommand::class,
             \Winter\Search\Console\DeleteIndexCommand::class,
             \Winter\Search\Console\FlushCommand::class,
             \Winter\Search\Console\ImportCommand::class,
             \Winter\Search\Console\IndexCommand::class,
+            \Winter\Search\Console\QueueImportCommand::class,
+            \Winter\Search\Console\SyncIndexSettingsCommand::class,
         ]);
     }
 

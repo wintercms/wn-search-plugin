@@ -2,8 +2,10 @@
 
 namespace Winter\Search\Engines;
 
+use Laravel\Scout\Attributes\SearchUsingFullText;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\DatabaseEngine as BaseDatabaseEngine;
+use ReflectionMethod;
 use Winter\Storm\Database\Traits\SoftDelete;
 use Winter\Storm\Support\Arr;
 

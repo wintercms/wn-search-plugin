@@ -2,17 +2,19 @@
 
 namespace Winter\Search\Classes;
 
-use Config;
-use Algolia\AlgoliaSearch\Config\SearchConfig;
-use Algolia\AlgoliaSearch\SearchClient as Algolia;
-use Algolia\AlgoliaSearch\Support\UserAgent;
+use Winter\Storm\Support\Facades\Config;
+use Algolia\AlgoliaSearch\Support\AlgoliaAgent as Algolia4UserAgent;
+use Algolia\AlgoliaSearch\Support\UserAgent as Algolia3UserAgent;
 use Laravel\Scout\EngineManager as BaseEngineManager;
 use MeiliSearch\Client as MeiliSearch;
-use Winter\Search\Engines\AlgoliaEngine;
+use Typesense\Client as Typesense;
+use Winter\Search\Engines\Algolia3Engine;
+use Winter\Search\Engines\Algolia4Engine;
 use Winter\Search\Engines\CollectionEngine;
 use Winter\Search\Engines\DatabaseEngine;
 use Winter\Search\Engines\MeiliSearchEngine;
 use Winter\Search\Engines\NullEngine;
+use Winter\Search\Engines\TypesenseEngine;
 
 /**
  * Engine Manager wrapper.
@@ -22,36 +24,35 @@ use Winter\Search\Engines\NullEngine;
 class EngineManager extends BaseEngineManager
 {
     /**
-     * Create an Algolia engine instance.
+     * Create an Algolia v3 engine instance.
      *
-     * @return \Winter\Search\Engines\AlgoliaEngine
+     * @return \Winter\Search\Engines\Algolia3Engine
      */
-    public function createAlgoliaDriver()
+    protected function configureAlgolia3Driver()
     {
-        $this->ensureAlgoliaClientIsInstalled();
+        Algolia3UserAgent::addCustomUserAgent('Winter Search', '1.0.0');
 
-        UserAgent::addCustomUserAgent('Winter Search', '1.0.0');
-
-        $config = SearchConfig::create(
-            Config::get('search.algolia.id'),
-            Config::get('search.algolia.secret')
-        )->setDefaultHeaders(
-            $this->defaultAlgoliaHeaders()
+        return Algolia3Engine::make(
+            config: Config::get('search.algolia'),
+            headers: $this->defaultAlgoliaHeaders(),
+            softDelete: Config::get('search.soft_delete')
         );
+    }
 
-        if (is_int($connectTimeout = Config::get('search.algolia.connect_timeout'))) {
-            $config->setConnectTimeout($connectTimeout);
-        }
+    /**
+     * Create an Algolia v4 engine instance.
+     *
+     * @return \Winter\Search\Engines\Algolia4Engine
+     */
+    protected function configureAlgolia4Driver()
+    {
+        Algolia4UserAgent::addCustomUserAgent('Winter Search', '1.0.0');
 
-        if (is_int($readTimeout = Config::get('search.algolia.read_timeout'))) {
-            $config->setReadTimeout($readTimeout);
-        }
-
-        if (is_int($writeTimeout = Config::get('search.algolia.write_timeout'))) {
-            $config->setWriteTimeout($writeTimeout);
-        }
-
-        return new AlgoliaEngine(Algolia::createWithConfig($config), Config::get('search.soft_delete'));
+        return Algolia4Engine::make(
+            config: Config::get('search.algolia'),
+            headers: $this->defaultAlgoliaHeaders(),
+            softDelete: Config::get('search.soft_delete')
+        );
     }
 
     /**
@@ -94,6 +95,21 @@ class EngineManager extends BaseEngineManager
             $this->container->make(MeiliSearch::class),
             Config::get('search.soft_delete', false)
         );
+    }
+
+    /**
+     * Create a Typesense engine instance.
+     *
+     * @return \Laravel\Scout\Engines\TypesenseEngine
+     *
+     * @throws \Typesense\Exceptions\ConfigError
+     */
+    public function createTypesenseDriver()
+    {
+        $config = config('search.typesense');
+        $this->ensureTypesenseClientIsInstalled();
+
+        return new TypesenseEngine(new Typesense($config['client-settings']), $config['max_total_results'] ?? 1000);
     }
 
     /**

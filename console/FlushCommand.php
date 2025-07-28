@@ -2,18 +2,27 @@
 
 namespace Winter\Search\Console;
 
-use Laravel\Scout\Console\FlushCommand as BaseFlushCommand;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Winter\Search\Behaviors\Halcyon\Searchable as HalcyonSearchable;
 use Winter\Search\Behaviors\Searchable;
+use Winter\Storm\Console\Command;
 
-class FlushCommand extends BaseFlushCommand
+#[AsCommand(name: 'search:flush')]
+class FlushCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'search:flush {model}';
+    protected $signature = 'search:flush {model : Class name of the model to flush}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = "Flush all of the model's records from the index";
 
     /**
      * Execute the console command.
@@ -34,7 +43,7 @@ class FlushCommand extends BaseFlushCommand
                 'Class %s does not implement the %s or the %s behavior',
                 $class,
                 Searchable::class,
-                HalyconSearchable::class,
+                HalcyonSearchable::class,
             ));
             return 1;
         }
