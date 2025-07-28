@@ -26,7 +26,6 @@ class SyncIndexSettingsCommand extends Command
      */
     protected $description = 'Sync your configured index settings with your search engine (Meilisearch)';
 
-
     /**
      * Execute the console command.
      *
