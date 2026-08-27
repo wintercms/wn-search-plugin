@@ -1,2 +1,6 @@
 "1.0.0":
     - Initial release of Search plugin.
+"1.0.1":
+    - Added an automated test workflow to run the plugin's unit tests against PHP 8.1 to 8.4.
+    - Documented the result relevancy API - getWithRelevance() and firstRelevant() - in the README.
+    - Fixed the build status badge in the README.
